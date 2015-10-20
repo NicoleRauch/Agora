@@ -94,6 +94,14 @@ module.exports = function (grunt) {
         dest: 'socrates/public/clientscripts',
         expand: true,
         flatten: true
+      },
+      reactJS: {
+        src: ['node_modules/react/dist/react.js',
+          'node_modules/react-dom/dist/react-dom.js',
+          'node_modules/babel-core/browser.js'],
+        dest: 'socrates/public/clientscripts',
+        expand: true,
+        flatten: true
       }
     },
     patch: {

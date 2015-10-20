@@ -182,6 +182,10 @@ app.get('/reception', function (req, res, next) {
 
 // for management tables:
 
+app.get('/managementReact', function (req, res, next) {
+  res.render('managementReact', {});
+});
+
 app.get('/management', function (req, res, next) {
   if (!res.locals.accessrights.canEditActivity()) {
     return res.redirect('/registration');
