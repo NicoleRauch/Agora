@@ -4,6 +4,7 @@ block scripts
   script(src='/clientscripts/react.js')
   script(src='/clientscripts/react-dom.js')
   script(src='/clientscripts/browser.js')
+  script(type="text/babel" src='/clientscripts/management.js')
 
 block title
   | Registration
@@ -12,6 +13,3 @@ block content
   .row
     .col-md-12
       .div(id='start')
-
-  script(type="text/babel").
-    ReactDOM.render( <h1>Hello, world!</h1>, document.getElementById('start') );

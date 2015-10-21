@@ -85,8 +85,10 @@ module.exports = function (grunt) {
         flatten: true
       },
       customJS: {
-        src: ['socrates/frontend/javascript/check-*',
+        src: [
+          'socrates/frontend/javascript/check-*',
           'socrates/frontend/javascript/enhance-*',
+          'socrates/frontend/javascript/management/*',
           'softwerkskammer/frontend/javascript/check-member*',
           'softwerkskammer/frontend/javascript/check-payment*',
           'softwerkskammer/frontend/javascript/activityDateModel.js',
@@ -228,7 +230,8 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-mocha-istanbul');
   grunt.loadNpmTasks('grunt-patch');
 
-  grunt.registerTask('prepare', ['eslint', 'copy', 'patch', 'less']);
+  // grunt.registerTask('prepare', ['eslint', 'copy', 'patch', 'less']);
+  grunt.registerTask('prepare', ['copy', 'patch', 'less']);
   grunt.registerTask('frontendtests', ['clean', 'prepare', 'jade', 'uglify:production', 'karma:once', 'uglify:development', 'karma:once', 'istanbul_check_coverage:frontend']);
   grunt.registerTask('tests', ['prepare', 'frontendtests', 'mocha_istanbul', 'istanbul_check_coverage:server']);
   grunt.registerTask('deploy_development', ['prepare', 'uglify:development']);
