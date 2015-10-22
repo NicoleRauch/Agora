@@ -22,6 +22,16 @@
   "engines": {
     "node": ">0.10"
   },
+  "browserify": {
+    "transform": [
+      [
+        "reactify",
+        {
+          "es6": true
+        }
+      ]
+    ]
+  },
   "dependencies": {
     "async": "1.4.2",
     "autonumeric": "1.9.39",
@@ -99,6 +109,7 @@
   },
   "devDependencies": {
     "grunt": "0.4.5",
+    "grunt-browserify": "^4.0.1",
     "grunt-cli": "0.1.13",
     "grunt-contrib-clean": "0.6.0",
     "grunt-contrib-copy": "0.8.1",
@@ -121,6 +132,7 @@
     "must-dist": "0.12.0",
     "phantomjs": "1.9.18",
     "proxyquire": "1.7.2",
+    "reactify": "^1.1.1",
     "request": "2.63.0",
     "sinon": "1.17.0",
     "supertest": "1.1.0"

@@ -88,7 +88,6 @@ module.exports = function (grunt) {
         src: [
           'socrates/frontend/javascript/check-*',
           'socrates/frontend/javascript/enhance-*',
-          'socrates/frontend/javascript/management/*',
           'softwerkskammer/frontend/javascript/check-member*',
           'softwerkskammer/frontend/javascript/check-payment*',
           'softwerkskammer/frontend/javascript/activityDateModel.js',
@@ -119,6 +118,12 @@ module.exports = function (grunt) {
     eslint: {
       options: {quiet: true},
       target: ['socrates/**/*.js']
+    },
+    browserify: {
+      bundle: {
+        src: ['socrates/frontend/javascript/management/*'],
+        dest: 'socrates/public/clientscripts/bundle.js'
+      }
     },
     karma: {
       options: {
@@ -220,6 +225,7 @@ module.exports = function (grunt) {
   });
 
   // These plugins provide necessary tasks.
+  grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-copy');
   grunt.loadNpmTasks('grunt-contrib-jade');
@@ -230,8 +236,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-mocha-istanbul');
   grunt.loadNpmTasks('grunt-patch');
 
-  // grunt.registerTask('prepare', ['eslint', 'copy', 'patch', 'less']);
-  grunt.registerTask('prepare', ['copy', 'patch', 'less']);
+  grunt.registerTask('prepare', ['eslint', 'browserify', 'copy', 'patch', 'less']);
   grunt.registerTask('frontendtests', ['clean', 'prepare', 'jade', 'uglify:production', 'karma:once', 'uglify:development', 'karma:once', 'istanbul_check_coverage:frontend']);
   grunt.registerTask('tests', ['prepare', 'frontendtests', 'mocha_istanbul', 'istanbul_check_coverage:server']);
   grunt.registerTask('deploy_development', ['prepare', 'uglify:development']);
