@@ -1,8 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import Management from './management.js';
 
 ReactDOM.render(
-  <h1>Hello, world! New file is nice :-)</h1>,
+  <Management />,
   document.getElementById('start')
 );
