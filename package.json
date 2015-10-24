@@ -24,12 +24,7 @@
   },
   "browserify": {
     "transform": [
-      [
-        "reactify",
-        {
-          "es6": true
-        }
-      ]
+      "babelify"
     ]
   },
   "dependencies": {
@@ -112,6 +107,7 @@
     "winston-config": "0.4.2"
   },
   "devDependencies": {
+    "babelify": "6.4.0",
     "eslint": "1.7.3",
     "eslint-plugin-import": "0.8.1",
     "grunt": "0.4.5",
@@ -138,7 +134,6 @@
     "must-dist": "0.12.0",
     "phantomjs": "1.9.18",
     "proxyquire": "1.7.2",
-    "reactify": "1.1.1",
     "request": "2.63.0",
     "sinon": "1.17.0",
     "supertest": "1.1.0"
