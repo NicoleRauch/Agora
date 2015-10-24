@@ -186,6 +186,28 @@ app.get('/managementReact', function (req, res, next) {
   res.render('managementReact', {});
 });
 
+app.get('/addonLines', function (req, res, next) {
+  activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
+    if (err) { return next(err); }
+    managementService.addonLinesOf(activity.participants, function (err1, addonLines) {
+      if (err1) { return next(err1); }
+
+      var result = _(addonLines).map(function (line) {
+        return {
+          firstname: line.member.firstname(),
+          lastname: line.member.lastname(),
+          email: line.member.email(),
+          homeAddress: line.addon.homeAddressLines(),
+          billingAddress: line.addon.billingAddressLines(),
+          resourceNames: activity.resources().resourceNamesOf(line.member.id())
+        };
+      });
+
+      res.send(result);
+    });
+  });
+});
+
 app.get('/management', function (req, res, next) {
   if (!res.locals.accessrights.canEditActivity()) {
     return res.redirect('/registration');
@@ -342,6 +364,5 @@ app.get('/nametags.tex', function (req, res, next) {
     res.send(nametagService.nametagsFor(activity.participants));
   });
 });
-
 
 module.exports = app;

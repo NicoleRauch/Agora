@@ -17,7 +17,7 @@ export class ManagementComponent extends Component {
         <Addresses displayed='Teilnehmer' data={this.props.addonLines}/>
         <hr />
         <Addresses displayed='Wartenden' data={[{
-    firstname: 'B', lastname: 'BB', email: 'b@b', homeAddressLines: 'BH', billingAddressLines: 'BaB', resourceNames: 'BR'
+    firstname: 'B', lastname: 'BB', email: 'b@b', homeAddress: 'BH', billingAddress: 'BaB', resourceNames: 'BR'
     }]}/>
       </div>
     );
