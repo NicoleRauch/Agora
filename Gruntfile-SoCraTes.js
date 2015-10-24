@@ -103,6 +103,12 @@ module.exports = function (grunt) {
         dest: 'socrates/public/clientscripts',
         expand: true,
         flatten: true
+      },
+      reactCSS: {
+        src: ['node_modules/react-bootstrap-table/css/react-bootstrap-table-all.css'],
+        dest: 'socrates/public/stylesheets',
+        expand: true,
+        flatten: true
       }
     },
     patch: {
