@@ -10,9 +10,9 @@ export function receiveAddonLines(addonLines) {
 }
 
 function fetchAddonLines(callback) {
-  ajax.ajax('/registration/addonLines',
-    (code, payload) => {
-      callback(payload);
+  ajax.ajax({url: '/registration/addonLines' },
+    (code, responseText) => {
+      callback(JSON.parse(responseText));
     }
   );
 }

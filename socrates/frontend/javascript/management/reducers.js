@@ -1,4 +1,4 @@
-import * as Actions from "./Actions.js";
+import * as actions from './Actions.js';
 
 const INITIAL_STATE = {
   addonLines: []
@@ -6,7 +6,7 @@ const INITIAL_STATE = {
 
 function reduceAddonLines(state = [], action = undefined) {
   switch (action.type) {
-  case Actions.RECEIVED_ADDON_LINES:
+  case actions.RECEIVED_ADDON_LINES:
     return action.payload;
   default:
     return state;
