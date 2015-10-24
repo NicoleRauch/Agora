@@ -1,7 +1,8 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import Addresses from './addresses.js';
 
-export default () => (
+const ManagementComponent = () => (
   <div>
     Management for the win!
     <Addresses displayed='Teilnehmer' data={[{
@@ -19,3 +20,5 @@ export default () => (
     }]} />
   </div>
 );
+
+export default connect(state => state)(ManagementComponent);
