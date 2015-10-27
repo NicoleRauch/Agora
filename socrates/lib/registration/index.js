@@ -208,6 +208,60 @@ app.get('/participants', function (req, res, next) {
   });
 });
 
+app.get('/waiting', function (req, res, next) {
+  activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
+    if (err) { return next(err); }
+
+    activity.waitinglistMembers = {};
+
+    function membersOnWaitinglist(act, resourceName, globalCallback) {
+      async.map(act.resourceNamed(resourceName).waitinglistEntries(),
+        function (entry, callback) {
+          memberstore.getMemberForId(entry.registrantId(), function (err, member) {
+            if (err || !member) { return callback(err); }
+            member.addedToWaitinglistAt = entry.registrationDate();
+            callback(null, member);
+          });
+        },
+        function (err, results) {
+          if (err) { return next(err); }
+          act.waitinglistMembers[resourceName] = _.compact(results);
+          globalCallback();
+        });
+    }
+
+    async.each(activity.resourceNames(),
+      function (resourceName, callback) { membersOnWaitinglist(activity, resourceName, callback); },
+      function (err2) {
+        if (err2) { return next(err2); }
+
+        var waitinglistMembers = [];
+        _.each(activity.resourceNames(), function (resourceName) {
+          waitinglistMembers.push(activity.waitinglistMembers[resourceName]);
+        });
+
+        managementService.addonLinesOf(_.flatten(waitinglistMembers), function (err1, waitinglistLines) {
+          if (err1) { return next(err1); }
+
+          var result = _(waitinglistLines).map(function (line) {
+            return {
+              firstname: line.member.firstname(),
+              lastname: line.member.lastname(),
+              email: line.member.email(),
+              tShirtSize: line.addon.tShirtSize(),
+              desiredRoommate: line.participation.roommate(),
+              homeAddress: line.addon.homeAddressLines(),
+              billingAddress: line.addon.billingAddressLines(),
+              resourceNames: activity.resources().resourceNamesOf(line.member.id())
+            };
+          });
+
+          res.send(result);
+        });
+      });
+  });
+});
+
 app.get('/management', function (req, res, next) {
   if (!res.locals.accessrights.canEditActivity()) {
     return res.redirect('/registration');

@@ -26,6 +26,6 @@ function reduceWaiting(state = [], action = undefined) {
 export default function(state = INITIAL_STATE, action = undefined) {
   return {
     participants: reduceParticipants(state.participants, action),
-    participants: reduceWaiting(state.waiting, action)
+    waiting: reduceWaiting(state.waiting, action)
   };
 }

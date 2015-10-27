@@ -9,6 +9,7 @@ export class ManagementComponent extends Component {
 
   componentDidMount() {
     this.props.dispatch(actions.loadParticipants());
+    this.props.dispatch(actions.loadWaiting());
   }
 
   render() {
@@ -42,9 +43,7 @@ export class ManagementComponent extends Component {
             <TabPanel>G</TabPanel>
             <TabPanel>H</TabPanel>
             <TabPanel>
-              <Addresses participants={this.props.addonLines} waiting={[{
-    firstname: 'B', lastname: 'BB', email: 'b@b', homeAddress: 'BH', billingAddress: 'BaB', resourceNames: 'BR'
-    }]} />
+              <Addresses participants={this.props.participants} waiting={this.props.waiting} />
             </TabPanel>
           </Tabs>
         </div>

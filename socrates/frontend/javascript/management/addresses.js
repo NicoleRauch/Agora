@@ -13,7 +13,7 @@ export default (props) => (
       <TableHeaderColumn dataSort={true} dataField='resourceNames'>Ressource</TableHeaderColumn>
     </BootstrapTable>
 
-    <hr>
+    <hr />
 
     <h1>Adressen der Wartenden</h1>
     <BootstrapTable data={props.waiting} striped={true} hover={true} condensed={true} search={true}>
