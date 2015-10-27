@@ -186,7 +186,7 @@ app.get('/managementReact', function (req, res, next) {
   res.render('managementReact', {});
 });
 
-app.get('/addonLines', function (req, res, next) {
+app.get('/participants', function (req, res, next) {
   activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
     if (err) { return next(err); }
     managementService.addonLinesOf(activity.participants, function (err1, addonLines) {

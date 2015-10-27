@@ -1,12 +1,22 @@
 import * as actions from './Actions.js';
 
 const INITIAL_STATE = {
-  addonLines: []
+  participants: [],
+  waiting: []
 };
 
-function reduceAddonLines(state = [], action = undefined) {
+function reduceParticipants(state = [], action = undefined) {
   switch (action.type) {
-  case actions.RECEIVED_ADDON_LINES:
+  case actions.RECEIVED_PARTICIPANTS:
+    return action.payload;
+  default:
+    return state;
+  }
+}
+
+function reduceWaiting(state = [], action = undefined) {
+  switch (action.type) {
+  case actions.RECEIVED_WAITING:
     return action.payload;
   default:
     return state;
@@ -15,6 +25,7 @@ function reduceAddonLines(state = [], action = undefined) {
 
 export default function(state = INITIAL_STATE, action = undefined) {
   return {
-    addonLines: reduceAddonLines(state.addonLines, action)
+    participants: reduceParticipants(state.participants, action),
+    participants: reduceWaiting(state.waiting, action)
   };
 }

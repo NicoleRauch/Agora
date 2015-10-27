@@ -1,26 +1,27 @@
 import ajax from 'nanoajax';
 
-export const RECEIVED_ADDON_LINES = 'RECEIVED_ADDON_LINES';
+export const RECEIVED_PARTICIPANTS = 'RECEIVED_ADDON_LINES';
+export const RECEIVED_WAITING = 'RECEIVED_WAITING';
 
-export function receiveAddonLines(addonLines) {
+export function receiveParticipants(participants) {
   return {
-    type: RECEIVED_ADDON_LINES,
-    payload: addonLines
+    type: RECEIVED_PARTICIPANTS,
+    payload: participants
   };
 }
 
-function fetchAddonLines(callback) {
-  ajax.ajax({url: '/registration/addonLines' },
+function fetchParticipants(callback) {
+  ajax.ajax({url: '/registration/participants' },
     (code, responseText) => {
       callback(JSON.parse(responseText));
     }
   );
 }
 
-export function loadAddonLines() {
+export function loadParticipants() {
   return (dispatch, getState) => {
-    fetchAddonLines(addonLines => {
-      dispatch(receiveAddonLines(addonLines));
+    fetchParticipants(participants => {
+      dispatch(receiveParticipants(participants));
     });
   };
 }

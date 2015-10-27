@@ -8,7 +8,7 @@ import * as actions from './Actions.js';
 export class ManagementComponent extends Component {
 
   componentDidMount() {
-    this.props.dispatch(actions.loadAddonLines());
+    this.props.dispatch(actions.loadParticipants());
   }
 
   render() {
@@ -42,11 +42,9 @@ export class ManagementComponent extends Component {
             <TabPanel>G</TabPanel>
             <TabPanel>H</TabPanel>
             <TabPanel>
-              <Addresses displayed='Teilnehmer' data={this.props.addonLines}/>
-              <hr />
-              <Addresses displayed='Wartenden' data={[{
+              <Addresses participants={this.props.addonLines} waiting={[{
     firstname: 'B', lastname: 'BB', email: 'b@b', homeAddress: 'BH', billingAddress: 'BaB', resourceNames: 'BR'
-    }]}/>
+    }]} />
             </TabPanel>
           </Tabs>
         </div>
