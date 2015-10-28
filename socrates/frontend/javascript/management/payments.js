@@ -1,23 +1,26 @@
 import React from 'react';
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import DataTable from './DataTable.js';
 
-export default (props) => (
-  <div>
-    <h1>Alle Teilnehmer mit Zahlungen</h1>
-    <BootstrapTable data={props.participants} striped={true} hover={true} condensed={true} search={true}>
-      <TableHeaderColumn dataSort={true} dataField='registered'>Registriert</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='resourceNames'>Ressource</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='nickname'>Nickname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='firstname'>Vorname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='lastname'>Nachname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='email' isKey={true}>E-Mail</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='location'>Ort/Region</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='tShirtSize'>T-Shirt</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='desiredRoommate'>Zimmer mit</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='bankTransferDate'>Überwiesen</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='creditCardDate'>Kreditkarte</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='paymentReceived'>Zahlungseingang</TableHeaderColumn>
-    </BootstrapTable>
+export default (props) => {
+  var columns = [
+    {dataField: 'registered', title: 'Registriert'},
+    {dataField: 'resourceNames', title: 'Ressource'},
+    {dataField: 'nickname', title: 'Nickname'},
+    {dataField: 'firstname', title: 'Vorname'},
+    {dataField: 'lastname', title: 'Nachname'},
+    {dataField: 'email', title: 'E-Mail'},
+    {dataField: 'location', title: 'Ort/Region'},
+    {dataField: 'tShirtSize', title: 'T-Shirt'},
+    {dataField: 'desiredRoommate', title: 'Zimmer mit'},
+    {dataField: 'bankTransferDate', title: 'Überwiesen'},
+    {dataField: 'creditCardDate', title: 'Kreditkarte'},
+    {dataField: 'paymentReceived', title: 'Zahlungseingang'}
+  ];
 
-  </div>
-);
+  return (
+    <div>
+      <h1>Alle Teilnehmer mit Zahlungen</h1>
+      <DataTable data={props.participants} columns={columns}/>
+    </div>
+  )
+}

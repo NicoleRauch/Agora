@@ -1,30 +1,34 @@
 import React from 'react';
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
+import DataTable from './DataTable.js';
 
-export default (props) => (
-  <div>
-    <h1>Adressen der Teilnehmer</h1>
-    <BootstrapTable data={props.participants} striped={true} hover={true} condensed={true} search={true}>
-      <TableHeaderColumn dataSort={true} dataField='firstname'>Vorname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='lastname'>Nachname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='email' isKey={true}>E-Mail</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='homeAddress'>Heimatadresse</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='billingAddress'>Rechnungsadresse</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='resourceNames'>Ressource</TableHeaderColumn>
-    </BootstrapTable>
+export default (props) => {
+  const participantColumns = [
+    { dataField: 'firstname', title: 'Vorname' },
+    { dataField: 'lastname', title: 'Nachname' },
+    { dataField: 'email', title: 'E-Mail' },
+    { dataField: 'homeAddress', title: 'Heimatadresse' },
+    { dataField: 'billingAddress', title: 'Rechnungsadresse' },
+    { dataField: 'resourceNames', title: 'Ressource' }
+  ];
+  const waitingColumns = [
+    { dataField: 'firstname', title: 'Vorname' },
+    { dataField: 'lastname', title: 'Nachname' },
+    { dataField: 'email', title: 'E-Mail' },
+    { dataField: 'tShirtSize', title: 'T-Shirt' },
+    { dataField: 'desiredRoommate', title: 'Zimmer mit' },
+    { dataField: 'homeAddress', title: 'Heimatadresse' },
+    { dataField: 'billingAddress', title: 'Rechnungsadresse' },
+    { dataField: 'resourceNames', title: 'Ressource' }
 
-    <hr />
+  ];
 
-    <h1>Adressen der Wartenden</h1>
-    <BootstrapTable data={props.waiting} striped={true} hover={true} condensed={true} search={true}>
-      <TableHeaderColumn dataSort={true} dataField='firstname'>Vorname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='lastname'>Nachname</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='email' isKey={true}>E-Mail</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='tShirtSize'>T-Shirt</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='desiredRoommate'>Zimmer mit</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='homeAddress'>Heimatadresse</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='billingAddress'>Rechnungsadresse</TableHeaderColumn>
-      <TableHeaderColumn dataSort={true} dataField='resourceNames'>Ressource</TableHeaderColumn>
-    </BootstrapTable>
-  </div>
-);
+  return (
+    <div>
+      <h1>Adressen der Teilnehmer</h1>
+      <DataTable data={props.participants} columns={participantColumns}/>
+
+      <h1>Adressen der Wartenden</h1>
+      <DataTable data={props.waiting} columns={waitingColumns}/>
+    </div>
+  );
+}
