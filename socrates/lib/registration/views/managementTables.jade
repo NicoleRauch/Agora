@@ -8,7 +8,7 @@ include ajax
 mixin localdate(momentOrNull)
   | #{momentOrNull ? momentOrNull.locale('de').format('L') : '-'}
 
-mixin buttonOrDate(momentOrNull, paymentDone, nickname)
+mixin buttonOrDate(momentOrNull, nickname)
   if (momentOrNull)
     | #{momentOrNull.locale('de').format('L')}
   else
@@ -288,7 +288,7 @@ block content
                     td #{line.participation.roommate()}
                     td: +localdate(payment.moneyTransferredMoment())
                     td: +localdate(payment.creditCardPaidMoment())
-                    td: +buttonOrDate(payment.paymentReceivedMoment(), payment.paymentDone(), line.member.nickname())
+                    td: +buttonOrDate(payment.paymentReceivedMoment(), line.member.nickname())
 
         .tab-pane#bedroomPairing
           for resourceName in ['bed_in_double', 'bed_in_junior']

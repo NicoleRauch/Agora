@@ -193,13 +193,22 @@ app.get('/participants', function (req, res, next) {
       if (err1) { return next(err1); }
 
       var result = _(addonLines).map(function (line) {
+        var payment = line.participation.payment();
         return {
+          nickname: line.member.nickname(),
           firstname: line.member.firstname(),
           lastname: line.member.lastname(),
           email: line.member.email(),
+          location: line.member.location(),
+          tShirtSize: line.addon.tShirtSize(),
+          desiredRoommate: line.participation.roommate(),
           homeAddress: line.addon.homeAddressLines(),
           billingAddress: line.addon.billingAddressLines(),
-          resourceNames: activity.resources().resourceNamesOf(line.member.id())
+          resourceNames: activity.resources().resourceNamesOf(line.member.id()),
+          registered: activity.resources().registrationDatesOf(line.member.id()),
+          bankTransferDate: payment.moneyTransferredMoment(),
+          creditCardDate: payment.creditCardPaidMoment(),
+          paymentReceived: payment.paymentReceivedMoment()
         };
       });
 

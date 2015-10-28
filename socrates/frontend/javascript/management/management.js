@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 
 import Addresses from './addresses.js';
+import Payments from './payments.js';
 import * as actions from './Actions.js';
 
 export class ManagementComponent extends Component {
@@ -37,7 +38,9 @@ export class ManagementComponent extends Component {
             <TabPanel>A</TabPanel>
             <TabPanel>B</TabPanel>
             <TabPanel>C</TabPanel>
-            <TabPanel>D</TabPanel>
+            <TabPanel>
+              <Payments participants={this.props.participants} />
+            </TabPanel>
             <TabPanel>E</TabPanel>
             <TabPanel>F</TabPanel>
             <TabPanel>G</TabPanel>
