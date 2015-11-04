@@ -189,30 +189,41 @@ app.get('/managementReact', function (req, res, next) {
 app.get('/participants', function (req, res, next) {
   activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
     if (err) { return next(err); }
-    managementService.addonLinesOf(activity.participants, function (err1, addonLines) {
-      if (err1) { return next(err1); }
 
-      var result = _(addonLines).map(function (line) {
-        var payment = line.participation.payment();
-        return {
-          nickname: line.member.nickname(),
-          firstname: line.member.firstname(),
-          lastname: line.member.lastname(),
-          email: line.member.email(),
-          location: line.member.location(),
-          tShirtSize: line.addon.tShirtSize(),
-          desiredRoommate: line.participation.roommate(),
-          homeAddress: line.addon.homeAddressLines(),
-          billingAddress: line.addon.billingAddressLines(),
-          resourceNames: activity.resources().resourceNamesOf(line.member.id()),
-          registered: activity.resources().registrationDatesOf(line.member.id()),
-          bankTransferDate: payment.moneyTransferredMoment(),
-          creditCardDate: payment.creditCardPaidMoment(),
-          paymentReceived: payment.paymentReceivedMoment()
-        };
+    const participantsByResources = {};
+
+    async.each(activity.resourceNames(), function(resourceName, callback) {
+      const participants = activity.participantsOf(resourceName);
+      const resource = activity.socratesResourceNamed(resourceName);
+
+      managementService.addonLinesOf(participants, function (err1, addonLines) {
+        if (err1) { return callback(err1); }
+        const result = {};
+        result.limit = resource.limit();
+        result.participants = _(addonLines).map(function (line) {
+          var payment = line.participation.payment();
+          return {
+            nickname: line.member.nickname(),
+            firstname: line.member.firstname(),
+            lastname: line.member.lastname(),
+            email: line.member.email(),
+            location: line.member.location(),
+            tShirtSize: line.addon.tShirtSize(),
+            desiredRoommate: line.participation.roommate(),
+            homeAddress: line.addon.homeAddressLines(),
+            billingAddress: line.addon.billingAddressLines(),
+            registered: resource.registrationDateOf(line.member.id()),
+            bankTransferDate: payment.moneyTransferredMoment(),
+            creditCardDate: payment.creditCardPaidMoment(),
+            paymentReceived: payment.paymentReceivedMoment()
+          };
+        });
+        participantsByResources[resourceName] = result;
+        callback(null);
       });
-
-      res.send(result);
+    }, function(errors) {
+        if(errors){ return next(errors); }
+        res.send(participantsByResources);
     });
   });
 });

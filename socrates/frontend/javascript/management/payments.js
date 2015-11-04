@@ -1,10 +1,11 @@
 import React from 'react';
 import DataTable from './DataTable.js';
+import { reduce } from 'lodash';
 
 export default (props) => {
   var columns = [
     {dataField: 'registered', title: 'Registriert'},
-    {dataField: 'resourceNames', title: 'Ressource'},
+    {dataField: 'resourceName', title: 'Ressource'},
     {dataField: 'nickname', title: 'Nickname'},
     {dataField: 'firstname', title: 'Vorname'},
     {dataField: 'lastname', title: 'Nachname'},
@@ -17,10 +18,18 @@ export default (props) => {
     {dataField: 'paymentReceived', title: 'Zahlungseingang'}
   ];
 
+  const resourceNames = Object.keys(props.participants);
+  const participants = reduce(resourceNames,
+    (participants, resourceName) =>
+      participants.concat(props.participants[resourceName].participants
+        .map(participant => Object.assign({ resourceName: resourceName }, participant))),
+    []
+  );
+
   return (
     <div>
-      <h1>Alle Teilnehmer mit Zahlungen</h1>
-      <DataTable data={props.participants} columns={columns}/>
+      <h4>Alle Teilnehmer mit Zahlungen</h4>
+      <DataTable data={participants} columns={columns}/>
     </div>
   )
 }
