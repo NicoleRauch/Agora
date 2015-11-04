@@ -208,11 +208,16 @@ app.get('/participants', function (req, res, next) {
             lastname: line.member.lastname(),
             email: line.member.email(),
             location: line.member.location(),
+
             tShirtSize: line.addon.tShirtSize(),
-            desiredRoommate: line.participation.roommate(),
             homeAddress: line.addon.homeAddressLines(),
             billingAddress: line.addon.billingAddressLines(),
+
+            desiredRoommate: line.participation.roommate(),
+
             registered: resource.registrationDateOf(line.member.id()),
+            duration: resource.durationFor(line.member.id()),
+
             bankTransferDate: payment.moneyTransferredMoment(),
             creditCardDate: payment.creditCardPaidMoment(),
             paymentReceived: payment.paymentReceivedMoment()

@@ -4,6 +4,7 @@ import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 
 import Addresses from './addresses.js';
 import Payments from './payments.js';
+import Participants from './participants.js';
 import * as actions from './Actions.js';
 
 export class ManagementComponent extends Component {
@@ -36,7 +37,9 @@ export class ManagementComponent extends Component {
               <Tab>Adressen</Tab>
             </TabList>
             <TabPanel>A</TabPanel>
-            <TabPanel>B</TabPanel>
+            <TabPanel>
+              <Participants participants={this.props.participants} />
+            </TabPanel>
             <TabPanel>C</TabPanel>
             <TabPanel>
               <Payments participants={this.props.participants} />
