@@ -313,6 +313,8 @@ describe('Groups Service (isGroupNameAvailable)', function () {
         callback(null, GroupA);
       } else if (name === 'GroupB') {
         callback(null, GroupB);
+      } else if (name === 'ErrorGroup') {
+        callback(new Error('Ouch! Something bad happened...'));
       } else {
         callback(null, null);
       }
@@ -336,6 +338,14 @@ describe('Groups Service (isGroupNameAvailable)', function () {
       expect(result).to.not.be(null);
       expect(result).to.be(true);
       done(err);
+    });
+  });
+
+  it('returns an error when the group fetching is not successful', function (done) {
+    systemUnderTest.isGroupNameAvailable('ErrorGroup', function (err, result) {
+      expect(result).to.be(undefined);
+      expect(err).to.not.be(null);
+      done(); // we expect an error
     });
   });
 
