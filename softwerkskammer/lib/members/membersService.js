@@ -9,6 +9,7 @@ var store = beans.get('memberstore');
 var avatarProvider = beans.get('avatarProvider');
 var fieldHelpers = beans.get('fieldHelpers');
 var galleryService = beans.get('galleryService');
+var misc = beans.get('misc');
 
 function isReserved(nickname) {
   return new RegExp('^edit$|^new$|^checknickname$|^submit$|^administration$|^[.][.]$|^[.]$|\\+', 'i').test(nickname);
@@ -46,11 +47,10 @@ module.exports = {
   saveCustomAvatarForNickname: function (nickname, files, params, callback) {
     store.getMember(nickname, function (err, member) {
       if (err) { return callback(err); }
-      galleryService.storeAvatar(files.image[0].path, params, function (err1, filename) {
-        if (err1) { return callback(err1); }
-        member.state.customAvatar = filename;
-        store.saveMember(member, callback);
-      });
+      galleryService.storeAvatar(files.image[0].path, params,
+        misc.ifErrorElse(callback, function (filename) {
+          member.state.customAvatar = filename;
+          store.saveMember(member, callback); } ));
     });
 
   },
