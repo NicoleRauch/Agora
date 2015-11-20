@@ -70,7 +70,7 @@ module.exports = {
 
   createOrSaveGroup: function (newGroup, callback) {
     groupstore.getGroup(newGroup.id, function (err, existingGroup) {
-      if (err) { return callback(err, existingGroup); }
+      if (err) { return callback(err); }
 
       async.parallel(
         [
