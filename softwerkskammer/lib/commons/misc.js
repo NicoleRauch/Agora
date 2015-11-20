@@ -101,13 +101,9 @@ module.exports = {
       return func();
     }
 
-    sources[0](function(err, result) {
-      if (err) { return errorCallback(err); }
+    sources[0](self.ifErrorElse(errorCallback, function(result) {
       self.ifErrorElse2(errorCallback, _.tail(sources), _.partial(func, result));
-    });
+    }));
   }
-
-
-
 };
 
