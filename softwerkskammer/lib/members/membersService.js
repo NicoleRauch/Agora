@@ -45,14 +45,14 @@ module.exports = {
   },
 
   saveCustomAvatarForNickname: function (nickname, files, params, callback) {
-    store.getMember(nickname, function (err, member) {
-      if (err) { return callback(err); }
-      galleryService.storeAvatar(files.image[0].path, params,
-        misc.ifErrorElse(callback, function (filename) {
-          member.state.customAvatar = filename;
-          store.saveMember(member, callback); } ));
-    });
-
+    store.getMember(nickname,
+      misc.ifErrorElse(callback, function (member) {
+        galleryService.storeAvatar(files.image[0].path, params,
+          misc.ifErrorElse(callback, function (filename) {
+            member.state.customAvatar = filename;
+            store.saveMember(member, callback);
+          }));
+      }));
   },
 
   deleteCustomAvatarForNickname: function (nickname, callback) {
