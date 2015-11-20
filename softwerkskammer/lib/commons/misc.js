@@ -93,7 +93,16 @@ module.exports = {
       if (err) { return errorCallback(err); }
       func(result);
     }
+  },
+
+  ifErrorElse2: function(errorCallback, source, func) {
+    source(function(err, result) {
+      if (err) { return errorCallback(err); }
+      func(result);
+    });
   }
+
+
 
 };
 
