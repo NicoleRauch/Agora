@@ -38,10 +38,11 @@ module.exports = {
   },
 
   isValidEmail: function (email, callback) {
-    store.getMemberForEMail(email, function (err, result) {
-      if (err) { return callback(err); }
-      callback(null, !result);
-    });
+    misc.asyncAndTransform(
+      [store.getMemberForEMail, email],
+      function (member) { return !member; },
+      callback
+    );
   },
 
   saveCustomAvatarForNickname: function (nickname, files, params, callback) {
