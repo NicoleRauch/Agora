@@ -28,20 +28,20 @@ function wordList(members, groupingFunction) {
     }, []); // create the final structure
 }
 
+var notExists = function (element) { return !element; };
+
 module.exports = {
   isValidNickname: function (nickname, callback) {
     if (fieldHelpers.containsSlash(nickname) || isReserved(nickname)) { return callback(null, false); }
-    store.getMember(nickname, function (err, result) {
-      if (err) { return callback(err); }
-      callback(null, !result);
-    });
+
+    misc.asyncAndTransform(
+      [store.getMember, nickname], notExists, callback
+    );
   },
 
   isValidEmail: function (email, callback) {
     misc.asyncAndTransform(
-      [store.getMemberForEMail, email],
-      function (member) { return !member; },
-      callback
+      [store.getMemberForEMail, email], notExists, callback
     );
   },
 
