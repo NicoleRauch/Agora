@@ -97,12 +97,9 @@ module.exports = {
   },
 
   updateSubscriptions: function (userMail, oldUserMail, newSubscriptions, callback) {
-    async.waterfall(
-      [
-        function (cb) { subscribedListsForUser(oldUserMail, cb); }
-      ],
-      function (err, subscribedLists) {
-        if (err) { return callback(err); }
+    misc.asyncAndCallback(
+      [subscribedListsForUser, oldUserMail],
+      function (subscribedLists) {
         newSubscriptions = misc.toArray(newSubscriptions);
         var emailChanged = userMail !== oldUserMail;
         var listsToSubscribe = emailChanged ? newSubscriptions : _.difference(newSubscriptions, subscribedLists);
@@ -124,7 +121,8 @@ module.exports = {
           ],
           function (err1) { callback(err1); }
         );
-      }
+      },
+      callback
     );
   },
 

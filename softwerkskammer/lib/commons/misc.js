@@ -89,10 +89,18 @@ module.exports = {
   regexEscape: regexEscape,
 
   asyncAndTransform: function (asyncOp, transform, callback) {
+    this.asyncAndCallback(asyncOp,
+      function(result) {
+        callback(null, transform(result));
+      },
+      callback);
+  },
+
+  asyncAndCallback: function (asyncOp, successCallback, errorCallback) {
     var args = _.tail(asyncOp).concat(
       function (err, result) {
-        if (err) { return callback(err); }
-        callback(null, transform(result));
+        if (err) { return errorCallback(err); }
+        successCallback(result);
       });
 
     asyncOp[0].apply(null, args);
