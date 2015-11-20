@@ -95,10 +95,15 @@ module.exports = {
     }
   },
 
-  ifErrorElse2: function(errorCallback, source, func) {
-    source(function(err, result) {
+  ifErrorElse2: function(errorCallback, sources, func) {
+    var self = this;
+    if(sources.length === 0) {
+      return func();
+    }
+
+    sources[0](function(err, result) {
       if (err) { return errorCallback(err); }
-      func(result);
+      self.ifErrorElse2(errorCallback, _.tail(sources), _.partial(func, result));
     });
   }
 

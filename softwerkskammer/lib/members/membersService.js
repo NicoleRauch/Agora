@@ -46,117 +46,115 @@ module.exports = {
 
   saveCustomAvatarForNickname: function (nickname, files, params, callback) {
     misc.ifErrorElse2(callback,
-      _.partial(store.getMember, nickname),
-      function (member) {
-        misc.ifErrorElse2(callback,
-          _.partial(galleryService.storeAvatar, files.image[0].path, params),
-          function (filename) {
-            member.state.customAvatar = filename;
-            store.saveMember(member, callback);
-          })}
-        );
-        /*
-         store.getMember(nickname,
-         misc.ifErrorElse(callback, function (member) {
-         galleryService.storeAvatar(files.image[0].path, params,
-         misc.ifErrorElse(callback, function (filename) {
-         member.state.customAvatar = filename;
-         store.saveMember(member, callback);
-         }));
-         }));
-         */
-      },
+      [
+        _.partial(store.getMember, nickname),
+        _.partial(galleryService.storeAvatar, files.image[0].path, params)
+      ],
 
-      deleteCustomAvatarForNickname
-    :
-    function (nickname, callback) {
-      store.getMember(nickname, function (err, member) {
-        if (err || !member.hasCustomAvatar()) { return callback(err); }
-        var avatar = member.customAvatar();
-        delete member.state.customAvatar;
-        store.saveMember(member, function (err1) {
-          if (err1) { return callback(err1); }
-          galleryService.deleteAvatar(avatar, function (err2) { callback(err2); });
+      function (member, filename) {
+        member.state.customAvatar = filename;
+        store.saveMember(member, callback);
+      });
+    /*
+     store.getMember(nickname,
+     misc.ifErrorElse(callback, function (member) {
+     galleryService.storeAvatar(files.image[0].path, params,
+     misc.ifErrorElse(callback, function (filename) {
+     member.state.customAvatar = filename;
+     store.saveMember(member, callback);
+     }));
+     }));
+     */
+  },
+
+  deleteCustomAvatarForNickname: function (nickname, callback) {
+    store.getMember(nickname, function (err, member) {
+      if (err || !member.hasCustomAvatar()) { return callback(err); }
+      var avatar = member.customAvatar();
+      delete member.state.customAvatar;
+      store.saveMember(member, function (err1) {
+        if (err1) { return callback(err1); }
+        galleryService.deleteAvatar(avatar, function (err2) { callback(err2); });
+      });
+    });
+  }
+
+  ,
+
+  getImage: function (member, callback) {
+    if (member.hasCustomAvatar()) {
+      return galleryService.retrieveScaledImage(member.customAvatar(), 'mini', function (err, result) {
+        if (err || !result) { return callback(); }
+        fs.readFile(result, function (err1, data) {
+          member.setAvatarData({
+            image: 'data:' + mimetypes.lookup(result) + ';base64,' + new Buffer(data).toString('base64'),
+            hasNoData: false
+          });
+          callback(err1);
         });
       });
     }
+    avatarProvider.getImage(member, callback);
+  }
+  ,
 
-    ,
+  toWordList: function (members) {
+    return wordList(members, function (each) { return each.toUpperCase(); })
+      .value(); // unwrap the array
+  }
+  ,
 
-    getImage: function (member, callback) {
-      if (member.hasCustomAvatar()) {
-        return galleryService.retrieveScaledImage(member.customAvatar(), 'mini', function (err, result) {
-          if (err || !result) { return callback(); }
-          fs.readFile(result, function (err1, data) {
-            member.setAvatarData({
-              image: 'data:' + mimetypes.lookup(result) + ';base64,' + new Buffer(data).toString('base64'),
-              hasNoData: false
-            });
-            callback(err1);
-          });
-        });
-      }
-      avatarProvider.getImage(member, callback);
-    }
-    ,
+  toUngroupedWordList: function (members) {
+    return wordList(members)
+      .sortBy('text')
+      .value();
+  }
+  ,
 
-    toWordList: function (members) {
-      return wordList(members, function (each) { return each.toUpperCase(); })
-        .value(); // unwrap the array
-    }
-    ,
-
-    toUngroupedWordList: function (members) {
-      return wordList(members)
-        .sortBy('text')
-        .value();
-    }
-    ,
-
-    findMemberFor: function (user, authenticationId, legacyAuthenticationId, callback) {
-      return function () {
-        if (!user) { // not currently logged in
-          return store.getMemberForAuthentication(authenticationId, function (err, member) {
-            if (err) { return callback(err); }
-            // we found a member:
-            if (member) { return callback(null, member); }
-            // no member: let's try again with the legacy id
-            if (legacyAuthenticationId) {
-              return store.getMemberForAuthentication(legacyAuthenticationId, function (err1, member1) {
-                if (err1 || !member1) {return callback(err1); }
-                if (authenticationId) {
-                  // add the new authentication id to the member
-                  member1.addAuthentication(authenticationId);
-                  return store.saveMember(member1, function (err2) { callback(err2, member1); });
-                }
-                callback(null, member1);
-              });
-            }
-            return callback(null);
-          });
-        }
-
-        // logged in -> we don't care about the legacy id, we only want to add a new authentication provider to our profile
-        var memberOfSession = user.member;
+  findMemberFor: function (user, authenticationId, legacyAuthenticationId, callback) {
+    return function () {
+      if (!user) { // not currently logged in
         return store.getMemberForAuthentication(authenticationId, function (err, member) {
           if (err) { return callback(err); }
-          if (member && memberOfSession.id() !== member.id()) { return callback(new Error('Unter dieser Authentifizierung existiert schon ein Mitglied.')); }
-          if (member && memberOfSession.id() === member.id()) { return callback(null, member); }
-          // no member found:
-          memberOfSession.addAuthentication(authenticationId);
-          store.saveMember(memberOfSession, function (err1) { callback(err1, memberOfSession); });
+          // we found a member:
+          if (member) { return callback(null, member); }
+          // no member: let's try again with the legacy id
+          if (legacyAuthenticationId) {
+            return store.getMemberForAuthentication(legacyAuthenticationId, function (err1, member1) {
+              if (err1 || !member1) {return callback(err1); }
+              if (authenticationId) {
+                // add the new authentication id to the member
+                member1.addAuthentication(authenticationId);
+                return store.saveMember(member1, function (err2) { callback(err2, member1); });
+              }
+              callback(null, member1);
+            });
+          }
+          return callback(null);
         });
-      };
-    }
-    ,
+      }
 
-    superuserEmails: function (callback) {
-      store.superUsers(function (err, members) {
-        callback(err, _.map(members, function (member) { return member.email(); }));
+      // logged in -> we don't care about the legacy id, we only want to add a new authentication provider to our profile
+      var memberOfSession = user.member;
+      return store.getMemberForAuthentication(authenticationId, function (err, member) {
+        if (err) { return callback(err); }
+        if (member && memberOfSession.id() !== member.id()) { return callback(new Error('Unter dieser Authentifizierung existiert schon ein Mitglied.')); }
+        if (member && memberOfSession.id() === member.id()) { return callback(null, member); }
+        // no member found:
+        memberOfSession.addAuthentication(authenticationId);
+        store.saveMember(memberOfSession, function (err1) { callback(err1, memberOfSession); });
       });
-    }
-    ,
+    };
+  }
+  ,
 
-    isReserved: isReserved
-  };
+  superuserEmails: function (callback) {
+    store.superUsers(function (err, members) {
+      callback(err, _.map(members, function (member) { return member.email(); }));
+    });
+  }
+  ,
+
+  isReserved: isReserved
+};
 
