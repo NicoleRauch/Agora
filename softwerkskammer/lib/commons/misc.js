@@ -88,13 +88,6 @@ module.exports = {
 
   regexEscape: regexEscape,
 
-  ifErrorElse: function (errorCallback, func) {
-    return function (err, result) {
-      if (err) { return errorCallback(err); }
-      func(result);
-    }
-  },
-
   asyncAndTransform: function (asyncOp, transform, callback) {
     var args = _.tail(asyncOp).concat(
       function (err, result) {
@@ -106,14 +99,24 @@ module.exports = {
   },
 
   ifErrorElse2: function (errorCallback, sources, func) {
+    var ifErrorElse = function (errorCallback, func) {
+      return function (err, result) {
+        if (err) { return errorCallback(err); }
+        func(result);
+      }
+    };
+
     var self = this;
     if (sources.length === 0) {
       return func();
     }
 
-    sources[0](self.ifErrorElse(errorCallback, function (result) {
+    sources[0](ifErrorElse(errorCallback, function (result) {
       self.ifErrorElse2(errorCallback, _.tail(sources), _.partial(func, result));
     }));
-  }
+  },
+
+  isNull: function (element) { return element === null; }
+
 };
 
