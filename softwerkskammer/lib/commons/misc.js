@@ -116,7 +116,9 @@ module.exports = {
     }));
   },
 
-  isNull: function (element) { return element === null; }
+  // TODO is this the same or is this really something different?
+  isNull: function (element) { return element === null; },
 
+  notExists: function (element) { return !element; }
 };
 
