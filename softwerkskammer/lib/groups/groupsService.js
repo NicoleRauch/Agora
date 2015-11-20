@@ -137,18 +137,14 @@ module.exports = {
   isGroupNameAvailable: function (groupname, callback) {
     var trimmedGroupname = groupname.trim();
     if (isReserved(trimmedGroupname)) { return callback(null, false); }
-    groupstore.getGroup(trimmedGroupname, function (err, group) {
-      if (err) { return callback(err); }
-      callback(null, group === null);
-    });
+    groupstore.getGroup(trimmedGroupname,
+      misc.ifErrorElse(callback, function (group) { callback(null, group === null); } ));
   },
 
   isEmailPrefixAvailable: function (prefix, callback) {
     var trimmedPrefix = prefix.trim();
-    groupstore.getGroupForPrefix(trimmedPrefix, function (err, group) {
-      if (err) { return callback(err); }
-      callback(null, group === null);
-    });
+    groupstore.getGroupForPrefix(trimmedPrefix,
+      misc.ifErrorElse(callback, function (group) { callback(null, group === null); } ));
   },
 
   getGroups: function (groupnames, callback) {

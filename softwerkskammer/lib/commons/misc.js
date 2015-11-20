@@ -86,6 +86,14 @@ module.exports = {
     return imageExtensions.indexOf(extension.replace(/\./, '')) > -1;
   },
 
-  regexEscape: regexEscape
+  regexEscape: regexEscape,
+
+  ifErrorElse: function(errorCallback, func) {
+    return function(err, result) {
+      if (err) { return errorCallback(err); }
+      func(result);
+    }
+  }
+
 };
 
