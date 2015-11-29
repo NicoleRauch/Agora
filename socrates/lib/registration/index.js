@@ -190,15 +190,15 @@ app.get('/participants', function (req, res, next) {
   activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
     if (err) { return next(err); }
 
-    const participantsByResources = {};
+    var participantsByResources = {};
 
     async.each(activity.resourceNames(), function(resourceName, callback) {
-      const participants = activity.participantsOf(resourceName);
-      const resource = activity.socratesResourceNamed(resourceName);
+      var participants = activity.participantsOf(resourceName);
+      var resource = activity.socratesResourceNamed(resourceName);
 
       managementService.addonLinesOf(participants, function (err1, addonLines) {
         if (err1) { return callback(err1); }
-        const result = {};
+        var result = {};
         result.limit = resource.limit();
         result.participants = _(addonLines).map(function (line) {
           var payment = line.participation.payment();
