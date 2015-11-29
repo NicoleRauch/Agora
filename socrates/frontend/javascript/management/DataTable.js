@@ -1,5 +1,4 @@
 import React from 'react';
-import { BootstrapTable, TableHeaderColumn } from 'react-bootstrap-table';
 
 export default (props) => (
   <table className="table table-condensed table-hover table-striped">
