@@ -10,7 +10,11 @@
     "jquery": true
   },
   "rules": {
-    "camelcase": 0
+    "camelcase": 0,
+    "strict": [
+      2,
+      "function"
+    ]
   },
   "plugins": [
     "import"

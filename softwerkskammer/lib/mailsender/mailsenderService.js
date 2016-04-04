@@ -26,7 +26,10 @@ function buttonFor(activity, resourceName) {
 }
 
 function statusmessageForError(type, err) {
-  return statusmessage.errorMessage('message.title.email_problem', 'message.content.mailsender.error_reason', {type: type, err: err.toString()});
+  return statusmessage.errorMessage('message.title.email_problem', 'message.content.mailsender.error_reason', {
+    type: type,
+    err: err.toString()
+  });
 }
 
 function statusmessageForSuccess(type) {
@@ -67,8 +70,17 @@ module.exports = {
         var message = new Message();
         message.setSubject('Einladung: ' + activity.title());
         message.setMarkdown(activityMarkdown(activity, language));
-        message.addToButtons({text: 'Zur Aktivität', url: misc.toFullQualifiedUrl('activities', encodeURIComponent(activity.url()))});
-        var result = {message: message, regionalgroups: regionalGroups, themegroups: thematicGroups, successURL: '/activities/' + encodeURIComponent(activityURL), activity: activity };
+        message.addToButtons({
+          text: 'Zur Aktivität',
+          url: misc.toFullQualifiedUrl('activities', encodeURIComponent(activity.url()))
+        });
+        var result = {
+          message: message,
+          regionalgroups: regionalGroups,
+          themegroups: thematicGroups,
+          successURL: '/activities/' + encodeURIComponent(activityURL),
+          activity: activity
+        };
         globalCallback(null, result);
       }
     );
@@ -132,7 +144,11 @@ module.exports = {
 
   sendResignment: function (markdown, member, callback) {
     var memberUrl = conf.get('publicUrlPrefix') + '/members/' + encodeURIComponent(member.nickname());
-    var messageData = {markdown: member.displayName() + ' ([' + member.nickname() + '](' + memberUrl + ')) möchte gerne austreten.\n\n' + markdown, subject: 'Austrittswunsch', sendCopyToSelf: true};
+    var messageData = {
+      markdown: member.displayName() + ' ([' + member.nickname() + '](' + memberUrl + ')) möchte gerne austreten.\n\n' + markdown,
+      subject: 'Austrittswunsch',
+      sendCopyToSelf: true
+    };
     var message = new Message(messageData, member);
     membersService.superuserEmails(function (err, superusers) {
       if (err) { return callback(err); }

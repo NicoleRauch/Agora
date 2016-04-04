@@ -9,13 +9,9 @@ var morgan = require('morgan');
 var bodyparser = require('body-parser');
 var compress = require('compression');
 var csurf = require('csurf');
-var jade = require('jade');
-var i18n = require('i18next');
 
 var conf = require('simple-configure');
 var beans = conf.get('beans');
-
-beans.get('socratesActivityExtended'); // must be called to extend the prototype
 
 // initialize winston and two concrete loggers
 /*eslint no-sync: 0 */
@@ -23,14 +19,6 @@ var winston = require('winston-config').fromFileSync(path.join(__dirname, '../co
 
 var appLogger = winston.loggers.get('socrates');
 var httpLogger = winston.loggers.get('socrates-http');
-
-// initialize i18n
-i18n.init({
-  supportedLngs: ['en'],
-  preload: ['en'],
-  fallbackLng: 'en',
-  resGetPath: 'locales/__ns__-__lng__.json'
-});
 
 // stream the log messages of express to winston, remove line breaks on message
 var winstonStream = {
@@ -63,13 +51,13 @@ module.exports = {
     app.use(beans.get('expressSessionConfigurator'));
     app.use(beans.get('passportInitializer'));
     app.use(beans.get('passportSessionInitializer'));
-    app.use(i18n.handle);
     app.use(beans.get('serverpathRemover'));
     app.use(beans.get('accessrights'));
     app.use(beans.get('secureByLogin'));
     app.use(beans.get('secureSuperuserOnly'));
     app.use(beans.get('secureSoCraTesAdminOnly'));
     app.use(beans.get('expressViewHelper'));
+    app.use(beans.get('initI18N'));
     app.use(beans.get('redirectRuleForNewUser'));
     app.use(beans.get('detectBrowser'));
     app.use(beans.get('secureAgainstClickjacking'));
@@ -84,16 +72,10 @@ module.exports = {
     useApp(app, '/mailsender/', beans.get('socratesMailsenderApp'));
     useApp(app, '/members/', beans.get('socratesMembersApp'));
     useApp(app, '/gallery/', beans.get('galleryApp'));
-    useApp(app, '/payment/', beans.get('socratesPaymentApp'));
     useApp(app, '/subscribers/', beans.get('socratesSubscribersApp'));
     useApp(app, '/wiki/', beans.get('socratesWikiApp'));
     app.use(beans.get('handle404')());
     app.use(beans.get('handle500')(appLogger));
-
-    i18n.registerAppHelper(app);
-    i18n.addPostProcessor('jade', function (val, key, opts) {
-      return jade.compile(val, opts)();
-    });
 
     return app;
   },

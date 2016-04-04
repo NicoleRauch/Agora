@@ -7,9 +7,9 @@ var beans = require('../../testutil/configureForTest').get('beans');
 var Member = beans.get('member');
 var memberstore = beans.get('memberstore');
 var membersService = beans.get('membersService');
+var avatarProvider = beans.get('avatarProvider');
 
 describe('MembersService', function () {
-  /* eslint no-path-concat: 0 */
   var imagePath = __dirname + '/../gallery/fixtures/image.jpg';
   var member;
 
@@ -217,8 +217,15 @@ describe('MembersService', function () {
 
   describe('avatar functions', function () {
     var saveMember;
+    var getImageFromAvatarProvider;
+    var gravatarData;
+
     beforeEach(function () {
       saveMember = sinon.stub(memberstore, 'saveMember', function (anyMember, callback) { callback(); });
+      gravatarData = {image: 'the image', hasNoImage: false};
+      getImageFromAvatarProvider = sinon.stub(avatarProvider, 'getImage', function (anyMember, callback) {
+        callback(gravatarData);
+      });
     });
 
     it('updates a member with information about a saved avatar', function (done) {
@@ -251,7 +258,19 @@ describe('MembersService', function () {
       var params = {};
       member.state.nickname = 'hada';
       membersService.saveCustomAvatarForNickname('hada', files, params, function () {
-        membersService.getImage(member, function (err) {
+        membersService.putAvatarIntoMemberAndSave(member, function (err) {
+          expect(member.inlineAvatar()).to.match(/^data:image\/jpeg;base64,\/9j/);
+          done(err);
+        });
+      });
+    });
+
+    it('updating the avatar from gravatar does not happen when there is a custom avatar', function (done) {
+      var files = {image: [{path: imagePath}]};
+      var params = {};
+      member.state.nickname = 'hada';
+      membersService.saveCustomAvatarForNickname('hada', files, params, function () {
+        membersService.updateImage(member, function (err) {
           expect(member.inlineAvatar()).to.match(/^data:image\/jpeg;base64,\/9j/);
           done(err);
         });
@@ -262,8 +281,51 @@ describe('MembersService', function () {
       member.state.customAvatar = 'myNonexistentPic.jpg';
       expect(member.inlineAvatar()).to.match('');
 
-      membersService.getImage(member, function (err) {
+      membersService.putAvatarIntoMemberAndSave(member, function (err) {
         expect(member.inlineAvatar()).to.match('');
+        done(err);
+      });
+    });
+
+    it('a member without a custom avatar loads it from gravatar and persists it', function (done) {
+      membersService.putAvatarIntoMemberAndSave(member, function (err) {
+        expect(member.state.avatardata).to.be(gravatarData);
+        expect(getImageFromAvatarProvider.called).to.be(true);
+        expect(saveMember.called).to.be(true);
+        done(err);
+      });
+    });
+
+    it('a member takes the persisted one if it is actual enough', function (done) {
+      member.state.avatardata = gravatarData;
+      membersService.putAvatarIntoMemberAndSave(member, function (err) {
+        expect(member.state.avatardata).to.be(gravatarData);
+        expect(getImageFromAvatarProvider.called).to.be(false);
+        expect(saveMember.called).to.be(false);
+        done(err);
+      });
+    });
+
+    it('loads it again if it is potentially outdated and saves it even though it is equal', function (done) {
+      member.state.avatardata = {image: 'the image', hasNoImage: false};
+
+      membersService.updateImage(member, function (err) {
+        expect(member.state.avatardata.image).to.eql(gravatarData.image);
+        expect(getImageFromAvatarProvider.called).to.be(true);
+        expect(saveMember.called).to.be(true);
+        done(err);
+      });
+    });
+
+    it('loads it again if it is potentially outdated but does not save it if it is equal', function (done) {
+      member.state.avatardata = {
+        image: 'another image',
+        hasNoImage: false
+      };
+      membersService.updateImage(member, function (err) {
+        expect(member.state.avatardata).to.be(gravatarData);
+        expect(getImageFromAvatarProvider.called).to.be(true);
+        expect(saveMember.called).to.be(true);
         done(err);
       });
     });

@@ -47,7 +47,7 @@ var app = misc.expressAppIn(__dirname);
 app.get('/', function (req, res, next) {
   memberstore.allMembers(function (err, members) {
     if (err) { return next(err); }
-    async.each(members, membersService.getImage, function (err1) {
+    async.each(members, membersService.putAvatarIntoMemberAndSave, function (err1) {
       if (err1) { return next(err1); }
       res.render('index', {members: members, wordList: membersService.toWordList(members)});
     });
@@ -58,7 +58,7 @@ app.get('/interests', function (req, res, next) {
   var casesensitive = req.query.casesensitive ? '' : 'i';
   memberstore.getMembersWithInterest(req.query.interest, casesensitive, function (err, members) {
     if (err) { return next(err); }
-    async.each(members, membersService.getImage, function (err1) {
+    async.each(members, membersService.putAvatarIntoMemberAndSave, function (err1) {
       if (err1) { return next(err1); }
       res.render('indexForTag', {
         interest: req.query.interest,
@@ -126,8 +126,8 @@ app.get('/edit/:nickname', function (req, res, next) {
   );
 });
 
-app.get('/delete/:nickname', function (req, res, next) {
-  var nicknameOfEditMember = req.params.nickname;
+app.post('/delete', function (req, res, next) {
+  var nicknameOfEditMember = req.body.nickname;
   groupsAndMembersService.getMemberWithHisGroups(nicknameOfEditMember, function (err, member) {
     if (err || !member) { return next(err); }
     if (!res.locals.accessrights.canDeleteMember(member)) {
@@ -202,8 +202,8 @@ app.post('/submitavatar', function (req, res, next) {
   });
 });
 
-app.get('/deleteAvatarFor/:nickname', function (req, res, next) {
-  var nicknameOfEditMember = req.params.nickname;
+app.post('/deleteAvatarFor', function (req, res, next) {
+  var nicknameOfEditMember = req.body.nickname;
   memberstore.getMember(nicknameOfEditMember, function (err, member) {
     if (err) { return next(err); }
     if (res.locals.accessrights.canEditMember(member)) {

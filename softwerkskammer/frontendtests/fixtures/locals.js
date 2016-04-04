@@ -1,3 +1,4 @@
+/* eslint strict: [2, "global"] */
 'use strict';
 var moment = require('moment-timezone');
 
@@ -16,7 +17,8 @@ module.exports = {
   t: function (string) { return string; },
   accessrights: {
     isRegistered: function () { return true; },
-    isMember: function () { return true; }
+    isMember: function () { return true; },
+    isSuperuser: function () { return false; }
   },
   activity: {
     id: function () { return ''; },
@@ -57,7 +59,8 @@ module.exports = {
     site: function () { return ''; },
     reference: function () { return ''; },
     notifyOnWikiChanges: function () { return ''; },
-    authentications: function () { return []; }
+    authentications: function () { return []; },
+    socratesOnly: function () { return false; }
   },
   regionalgroups: [],
   themegroups: [],

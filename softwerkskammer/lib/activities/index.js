@@ -22,7 +22,7 @@ var statusmessage = beans.get('statusmessage');
 var resourceRegistrationRenderer = beans.get('resourceRegistrationRenderer');
 
 var standardResourceName = Activity.standardName;
-var reservedURLs = '^gdcr$|^upcoming$|^past$|^ical$|^eventsForSidebar$|^new$|^newLike$|^edit$|^submit$|^checkurl$|^subscribe$|^unsubscribe$|^addToWaitinglist$|^removeFromWaitinglist$|\\+';
+var reservedURLs = conf.get('reservedActivityURLs');
 
 var app = misc.expressAppIn(__dirname);
 
@@ -133,8 +133,8 @@ app.get('/ical/:url', function (req, res, next) {
 });
 
 app.get('/eventsForSidebar', function (req, res, next) {
-  var from = moment.unix(req.query.start).utc();
-  if (from.date() > 1) { from.add('M', 1); }
+  var from = moment(req.query.start).utc();
+  if (from.date() > 1) { from.add(1, 'M'); }
   req.session.calViewYear = from.year();
   req.session.calViewMonth = from.month();
 
@@ -356,8 +356,8 @@ app.get('/addons/:url', function (req, res, next) {
   });
 });
 
-app.get('/delete/:activityUrl', function (req, res, next) {
-  var url = req.params.activityUrl;
+app.post('/delete', function (req, res, next) {
+  var url = req.body.activityUrl;
   activitystore.getActivity(url, function (err, activity) {
     if (err || !activity) { return next(err); }
     if (!res.locals.accessrights.canDeleteActivity(activity)) {

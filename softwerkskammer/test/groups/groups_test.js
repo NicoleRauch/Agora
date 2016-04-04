@@ -6,6 +6,7 @@ var sinon = require('sinon').sandbox.create();
 var beans = require('../../testutil/configureForTest').get('beans');
 var groupsPersistence = beans.get('groupsPersistence');
 var membersPersistence = beans.get('membersPersistence');
+var membersService = beans.get('membersService');
 var activitystore = beans.get('activitystore');
 var Group = beans.get('group');
 var Activity = beans.get('activity');
@@ -49,6 +50,10 @@ describe('Groups application', function () {
         {nickname: 'hada', firstname: 'Hans', lastname: 'Dampf', email: 'hans@aol.com'},
         {nickname: 'pepe', firstname: 'Peter', lastname: 'Meyer', email: 'peter@google.de'}
       ]);
+    });
+
+    sinon.stub(membersService, 'putAvatarIntoMemberAndSave', function (member, callback) {
+      callback();
     });
 
     sinon.stub(groupsPersistence, 'listByIds', function (list, sortOrder, callback) {
@@ -155,7 +160,7 @@ describe('Groups application', function () {
         .expect(/Dies ist Gruppe A\./)
         .expect(/Themengruppe/)
         .expect(/Mitglieder:/)
-        .expect(/Diese Gruppe hat&nbsp;2 Mitglieder\./, done);
+        .expect(/Diese Gruppe hat 2 Mitglieder\./, done);
     });
 
     it('displays an existing group and its members if somebody is logged in', function (done) {
@@ -167,7 +172,7 @@ describe('Groups application', function () {
         .expect(/Dies ist Gruppe A\./)
         .expect(/Themengruppe/)
         .expect(/Mitglieder:/)
-        .expect(/Diese Gruppe hat&nbsp;2 Mitglieder\./)
+        .expect(/Diese Gruppe hat 2 Mitglieder\./)
         .expect(/Peter Meyer/)
         .expect(/Hans Dampf/, done);
     });

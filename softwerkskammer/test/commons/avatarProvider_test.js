@@ -1,44 +1,37 @@
 'use strict';
 
 var expect = require('must-dist');
-var sinon = require('sinon').sandbox.create();
 
 var beans = require('../../testutil/configureForTest').get('beans');
 var Member = beans.get('member');
 var avatarProvider = beans.get('avatarProvider');
 
 describe('AvatarProvider', function () {
-
-  afterEach(function () {
-    sinon.restore();
-  });
-
-  it('tries to load a members avatar via gravatar if it not cached locally', function (done) {
-    sinon.stub(avatarProvider, 'imageDataFromGravatar', function (anyMember, callback) {
-      callback({image: 'image', hasNoImage: true});
-    });
-
-    var member = new Member({email: 'Email'});
+  it('loads the gravatar of "leider" from gravatar', function (done) {
+    var member = new Member({email: 'derleider@web.de'});
     avatarProvider.getImage(member, function () {
-      expect(member.inlineAvatar()).to.be('image');
-      expect(member.hasNoImage).to.be(true);
+      expect(member.inlineAvatar()).to.match('data:image/jpeg;base64,/9j/4'); // the real picture (volatile)
+      expect(member.hasImage()).to.be(true);
       done();
     });
   });
 
-  it('Does not load a members avatar via gravatar if it can be retrieved from cache', function (done) {
-    sinon.stub(avatarProvider, 'imageDataFromCache', function () {
-      return {image: 'image', hasNoImage: false};
-    });
-    var gravatarCall = sinon.spy(avatarProvider, 'imageDataFromGravatar');
-
-    var member = new Member({email: 'Email'});
+  it('defaults to no image if address has no gravatar', function (done) {
+    var member = new Member({email: 'derleider@web.dede'});
     avatarProvider.getImage(member, function () {
-      expect(member.inlineAvatar()).to.be('image');
-      expect(gravatarCall.called).to.be(false);
+      expect(member.inlineAvatar()).to.match('data:image/png;base64,iVBO'); // no image
+      expect(member.hasImage()).to.be(false);
       done();
     });
   });
 
+  it('defaults to "null" image if gravatar has errors', function (done) {
+    var member = new Member({email: 'derleider@web.de'});
+    avatarProvider.getImage(member, function () {
+      expect(member.inlineAvatar()).to.be('');
+      expect(member.hasImage()).to.be(false);
+      done();
+    }, 'http://nonexisting.site');
+  });
 });
 

@@ -31,10 +31,6 @@ Member.prototype.fillFromUI = function (object) {
   return self;
 };
 
-Member.prototype.setSite = function (siteUrl) {
-  this.site = fieldHelpers.addPrefixTo('http://', siteUrl, 'https://');
-};
-
 Member.prototype.displayName = function () {
   return this.firstname() + ' ' + this.lastname();
 };
@@ -72,13 +68,20 @@ Member.prototype.avatarUrl = function (size) {
   return avatarProvider.avatarUrl(this.email(), size || 200);
 };
 
+Member.prototype.hasImage = function () {
+  return (this.getAvatarData() && this.getAvatarData().hasNoImage) === false;
+};
+
 Member.prototype.setAvatarData = function (data) {
-  this.avatarImage = data.image;
-  this.hasNoImage = data.hasNoImage;
+  this.state.avatardata = data;
+};
+
+Member.prototype.getAvatarData = function () {
+  return this.state.avatardata;
 };
 
 Member.prototype.inlineAvatar = function () {
-  return this.avatarImage || '';
+  return (this.getAvatarData() && this.getAvatarData().image) || '';
 };
 
 Member.prototype.hasCustomAvatar = function () {
@@ -89,6 +92,15 @@ Member.prototype.customAvatar = function () {
   return this.state.customAvatar;
 };
 
+Member.prototype.setCustomAvatar = function (data) {
+  this.state.customAvatar = data;
+};
+
+Member.prototype.deleteCustomAvatar = function () {
+  delete this.state.customAvatar;
+  delete this.state.avatardata;
+};
+
 Member.prototype.asGitAuthor = function () {
   return this.nickname() + ' <' + this.nickname() + '@softwerkskammer.org>';
 };
@@ -97,8 +109,10 @@ Member.prototype.addAuthentication = function (authenticationId) {
   if (!this.state.authentications) {
     this.state.authentications = [];
   }
-  this.state.authentications.push(authenticationId);
-  this.state.authentications = _.uniq(this.authentications());
+  if (authenticationId) {
+    this.state.authentications.push(authenticationId);
+    this.state.authentications = _.uniq(this.authentications());
+  }
 };
 
 Member.prototype.id = function () {

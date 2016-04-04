@@ -16,8 +16,8 @@ function isReserved(nickname) {
 
 function wordList(members, groupingFunction) {
   return _(members).map(function (member) {
-    return member.interests() && member.interests().split(',').map(function (interest) {return interest.trim(); });
-  })
+      return member.interests() && member.interests().split(',').map(function (interest) {return interest.trim(); });
+    })
     .flatten() // now we have all words in one collection
     .compact() // remove empty strings
     .groupBy(groupingFunction) // prepare counting by grouping
@@ -25,6 +25,34 @@ function wordList(members, groupingFunction) {
       var mainWord = _(words).groupBy().max(function (word) { return word.length; })[0]; // choose the most common form
       return result.push({text: mainWord, weight: words.length, html: {class: 'interestify'}});
     }, []); // create the final structure
+}
+
+function setCustomAvatarImageInMember(member, callback) {
+  return galleryService.retrieveScaledImage(member.customAvatar(), 'mini', function (err, result) {
+    if (err || !result) {
+      if (err.message.match(/does not exist/)) {
+        delete member.state.customAvatar;
+      }
+      return callback();
+    }
+    fs.readFile(result, function (err1, data) {
+      member.setAvatarData({
+        image: 'data:' + mimetypes.lookup(result) + ';base64,' + new Buffer(data).toString('base64'),
+        hasNoImage: false
+      });
+      callback(err1);
+    });
+  });
+}
+
+function updateImage(member, callback) { // to be called at regular intervals
+  if (member.hasCustomAvatar()) {
+    return callback();
+  }
+  avatarProvider.getImage(member, function (imageData) {
+    member.setAvatarData(imageData);
+    store.saveMember(member, callback); // never, ever "fork" stuff in node by not having return values *I AM IDIOT*
+  });
 }
 
 module.exports = {
@@ -48,18 +76,19 @@ module.exports = {
       if (err) { return callback(err); }
       galleryService.storeAvatar(files.image[0].path, params, function (err1, filename) {
         if (err1) { return callback(err1); }
-        member.state.customAvatar = filename;
-        store.saveMember(member, callback);
+        member.setCustomAvatar(filename);
+        setCustomAvatarImageInMember(member, function () { // we ignore the error here
+          store.saveMember(member, callback);
+        });
       });
     });
-
   },
 
   deleteCustomAvatarForNickname: function (nickname, callback) {
     store.getMember(nickname, function (err, member) {
       if (err || !member.hasCustomAvatar()) { return callback(err); }
       var avatar = member.customAvatar();
-      delete member.state.customAvatar;
+      member.deleteCustomAvatar();
       store.saveMember(member, function (err1) {
         if (err1) { return callback(err1); }
         galleryService.deleteAvatar(avatar, function (err2) { callback(err2); });
@@ -67,21 +96,12 @@ module.exports = {
     });
   },
 
-  getImage: function (member, callback) {
-    if (member.hasCustomAvatar()) {
-      return galleryService.retrieveScaledImage(member.customAvatar(), 'mini', function (err, result) {
-        if (err || !result) { return callback(); }
-        fs.readFile(result, function (err1, data) {
-          member.setAvatarData({
-            image: 'data:' + mimetypes.lookup(result) + ';base64,' + new Buffer(data).toString('base64'),
-            hasNoData: false
-          });
-          callback(err1);
-        });
-      });
-    }
-    avatarProvider.getImage(member, callback);
+  putAvatarIntoMemberAndSave: function (member, callback) {
+    if (member.getAvatarData()) { return callback(); }
+    updateImage(member, callback);
   },
+
+  updateImage: updateImage,
 
   toWordList: function (members) {
     return wordList(members, function (each) { return each.toUpperCase(); })

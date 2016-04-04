@@ -1,15 +1,17 @@
 'use strict';
 
 var request = require('supertest');
-var sinonSandbox = require('sinon').sandbox.create();
+var sinon = require('sinon').sandbox.create();
 
 var beans = require('../../testutil/configureForTest').get('beans');
 
 var memberstore = beans.get('memberstore');
 var Member = beans.get('member');
 var dummymember = new Member({id: 'memberID', nickname: 'hada', email: 'a@b.c', site: 'http://my.blog', firstname: 'Hans', lastname: 'Dampf', authentications: []});
+var socratesmember = new Member({id: 'socID', nickname: 'soci', email: 'soc@ra.tes', site: '', firstname: 'Frank', lastname: 'Pink', socratesOnly: true, authentications: []});
 
 var groupsService = beans.get('groupsService');
+var membersService = beans.get('membersService');
 var groupsAndMembersService = beans.get('groupsAndMembersService');
 var Group = beans.get('group');
 
@@ -39,28 +41,36 @@ describe('Administration application', function () {
   });
 
   beforeEach(function () {
-    sinonSandbox.stub(groupsService, 'getAllAvailableGroups', function (callback) {
+    sinon.stub(groupsService, 'getAllAvailableGroups', function (callback) {
       return callback(null, [new Group({id: 'id', longName: 'GRUPPO', description: 'desc'})]);
+    });
+    sinon.stub(membersService, 'putAvatarIntoMemberAndSave', function (member, callback) {
+      callback();
     });
   });
 
   afterEach(function () {
-    sinonSandbox.restore();
+    sinon.restore();
   });
 
-  it('shows the table for members', function (done) {
-    sinonSandbox.stub(memberstore, 'allMembers', function (callback) {
+  it('shows the table for members including socrates only members', function (done) {
+    sinon.stub(memberstore, 'allMembers', function (callback) {
       return callback(null, [dummymember]);
+    });
+    sinon.stub(memberstore, 'socratesOnlyMembers', function (callback) {
+      return callback(null, [socratesmember]);
     });
     appWithSuperuser
       .get('/memberTable')
       .expect(200)
       .expect(/<h2>Verwaltung<small> Mitglieder/)
-      .expect(/a@b\.c/, done);
+      .expect(/a@b\.c/)
+      .expect(/img src="https:\/\/www.socrates-conference.de\/img\/favicon\.ico"/)
+      .expect(/soc@ra\.tes/, done);
   });
 
   it('shows the table for members and groups', function (done) {
-    sinonSandbox.stub(groupsAndMembersService, 'getAllMembersWithTheirGroups', function (callback) {
+    sinon.stub(groupsAndMembersService, 'getAllMembersWithTheirGroups', function (callback) {
       return callback(null, [dummymember], [{group: 'Überflüssig', extraAddresses: ['peter.pan@alice.de']}]);
     });
     appWithSuperuser
@@ -82,7 +92,7 @@ describe('Administration application', function () {
   });
 
   it('shows the table for activities', function (done) {
-    sinonSandbox.stub(activitiesService, 'getActivitiesForDisplay', function (activitiesFetcher, callback) {
+    sinon.stub(activitiesService, 'getActivitiesForDisplay', function (activitiesFetcher, callback) {
       return callback(null, [emptyActivity]);
     });
     appWithSuperuser
@@ -94,7 +104,7 @@ describe('Administration application', function () {
   });
 
   it('shows the table for announcements', function (done) {
-    sinonSandbox.stub(announcementstore, 'allAnnouncements', function (callback) {
+    sinon.stub(announcementstore, 'allAnnouncements', function (callback) {
       return callback(null, [ dummyAnnouncement ]);
     });
     appWithSuperuser
