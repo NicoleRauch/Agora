@@ -1,6 +1,6 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
 
 import Addresses from './addresses.js';
 import Payments from './payments.js';
@@ -12,6 +12,7 @@ export class ManagementComponent extends Component {
   componentDidMount() {
     this.props.dispatch(actions.loadParticipants());
     this.props.dispatch(actions.loadWaiting());
+    this.props.dispatch(actions.loadDurations());
   }
 
   render() {
@@ -36,7 +37,9 @@ export class ManagementComponent extends Component {
               <Tab>Abgemeldete</Tab>
               <Tab>Adressen</Tab>
             </TabList>
-            <TabPanel>A</TabPanel>
+            <TabPanel>
+              <BedOccupation durations={this.props.durations} />
+            </TabPanel>
             <TabPanel>
               <Participants participants={this.props.participants} />
             </TabPanel>

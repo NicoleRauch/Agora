@@ -308,6 +308,14 @@ app.get('/waiting', function (req, res, next) {
   });
 });
 
+app.get('/durations', function (req, res, next) {
+  eventstoreService.getRegistrationReadModel(currentUrl, function (err, registrationReadModel) {
+    if (err || !registrationReadModel) { return next(err); }
+
+    res.send(managementService.durations(registrationReadModel));
+  });
+});
+
 app.get('/management', function (req, res, next) {
   if (!res.locals.accessrights.canEditActivity()) {
     return res.redirect('/registration');
