@@ -1,6 +1,7 @@
 'use strict';
 var moment = require('moment-timezone');
 var _ = require('lodash');
+var R = require('ramda');
 var async = require('async');
 
 var conf = require('simple-configure');
@@ -205,88 +206,85 @@ app.get('/reception', function (req, res, next) {
 
 // for management tables:
 
-app.get('/managementReact', function (req, res, next) {
+app.get('/managementReact', function (req, res) {
   res.render('managementReact', {});
 });
 
 app.get('/participants', function (req, res, next) {
-  activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
-    if (err) { return next(err); }
 
-    var participantsByResources = {};
+  eventstoreService.getRegistrationReadModel(currentUrl, function (err00, registrationReadModel) {
+    if (err00 || !registrationReadModel) { return next(err00); }
+    eventstoreService.getSoCraTesReadModel(currentUrl, function (err000, socratesReadModel) {
+      if (err000 || !socratesReadModel) { return next(err000); }
 
-    async.each(activity.resourceNames(), function(resourceName, callback) {
-      var participants = activity.participantsOf(resourceName);
-      var resource = activity.socratesResourceNamed(resourceName);
+      activityParticipantService.getParticipantsFor(currentYear, function (err_, participants) {
+        if (err_) { return next(err_); }
+        managementService.addonLinesOf(participants, function (err1, addonLines) {
+          if (err1) { return next(err1); }
 
-      managementService.addonLinesOf(participants, function (err1, addonLines) {
-        if (err1) { return callback(err1); }
-        var result = {};
-        result.limit = resource.limit();
-        result.participants = _(addonLines).map(function (line) {
-          var payment = line.participation.payment();
-          return {
-            nickname: line.member.nickname(),
-            firstname: line.member.firstname(),
-            lastname: line.member.lastname(),
-            email: line.member.email(),
-            location: line.member.location(),
+          var enhancedLines = R.map(line => {
+            return {
+              nickname: line.member.nickname(),
+              firstname: line.member.firstname(),
+              lastname: line.member.lastname(),
+              email: line.member.email(),
+              location: line.member.location(),
 
-            tShirtSize: line.addon.tShirtSize(),
-            homeAddress: line.addon.homeAddressLines(),
-            billingAddress: line.addon.billingAddressLines(),
+              tShirtSize: line.addon.tShirtSize(),
+              homeAddress: line.addon.homeAddressLines(),
+              billingAddress: line.addon.billingAddressLines(),
 
-            desiredRoommate: line.participation.roommate(),
+              desiredRoommate: line.participation.roommate(),
 
-            registered: resource.registrationDateOf(line.member.id()),
-            duration: resource.durationFor(line.member.id()),
+              registered: registrationReadModel.joinedSoCraTesAt(line.member.id()),
+              duration: registrationReadModel.durationFor(line.member.id()),
+              roomType: registrationReadModel.registeredInRoomType(line.member.id())
+            };
+          }, addonLines);
+          const groupedLines = R.groupBy(l => l.roomType, enhancedLines);
 
-            bankTransferDate: payment.moneyTransferredMoment(),
-            creditCardDate: payment.creditCardPaidMoment(),
-            paymentReceived: payment.paymentReceivedMoment()
-          };
+          const participantsByResources = R.map(roomType => {
+              return {
+                limit: socratesReadModel.quotaFor(roomType),
+                participants: groupedLines[roomType]
+              };
+            },
+            roomOptions.allIds());
+
+          res.send(participantsByResources);
         });
-        participantsByResources[resourceName] = result;
-        callback(null);
       });
-    }, function(errors) {
-        if(errors){ return next(errors); }
-        res.send(participantsByResources);
     });
   });
 });
 
 app.get('/waiting', function (req, res, next) {
-  activitiesService.getActivityWithGroupAndParticipants(currentUrl, function (err, activity) {
-    if (err) { return next(err); }
 
-    activity.waitinglistMembers = {};
+  eventstoreService.getRegistrationReadModel(currentUrl, function (err00, registrationReadModel) {
+    if (err00 || !registrationReadModel) { return next(err00); }
 
-    function membersOnWaitinglist(act, resourceName, globalCallback) {
-      async.map(act.resourceNamed(resourceName).waitinglistEntries(),
+    var waitinglistMembers = [];
+
+    function membersOnWaitinglist(roomType, globalCallback) {
+      async.map(registrationReadModel.allWaitinglistParticipantsIn(roomType),
         function (entry, callback) {
-          memberstore.getMemberForId(entry.registrantId(), function (err, member) {
-            if (err || !member) { return callback(err); }
-            member.addedToWaitinglistAt = entry.registrationDate();
+          memberstore.getMemberForId(entry.memberId, function (err2, member) {
+            if (err2 || !member) { return callback(err2); }
+            member.addedToWaitinglistAt = entry.joinedWaitinglist;
             callback(null, member);
           });
         },
-        function (err, results) {
-          if (err) { return next(err); }
-          act.waitinglistMembers[resourceName] = _.compact(results);
+        function (err2, results) {
+          if (err2) { return next(err2); }
+          waitinglistMembers.push(_.compact(results));
           globalCallback();
         });
     }
 
-    async.each(activity.resourceNames(),
-      function (resourceName, callback) { membersOnWaitinglist(activity, resourceName, callback); },
+    async.each(roomOptions.allIds(),
+      membersOnWaitinglist,
       function (err2) {
         if (err2) { return next(err2); }
-
-        var waitinglistMembers = [];
-        _.each(activity.resourceNames(), function (resourceName) {
-          waitinglistMembers.push(activity.waitinglistMembers[resourceName]);
-        });
 
         managementService.addonLinesOf(_.flatten(waitinglistMembers), function (err1, waitinglistLines) {
           if (err1) { return next(err1); }
@@ -300,7 +298,7 @@ app.get('/waiting', function (req, res, next) {
               desiredRoommate: line.participation.roommate(),
               homeAddress: line.addon.homeAddressLines(),
               billingAddress: line.addon.billingAddressLines(),
-              resourceNames: activity.resources().resourceNamesOf(line.member.id())
+              resourceNames: registrationReadModel.roomTypesOf(line.member.id())
             };
           });
 
@@ -353,7 +351,7 @@ app.get('/management', function (req, res, next) {
             }
 
             async.each(roomOptions.allIds(),
-              function (roomType, callback) { membersOnWaitinglist(roomType, callback); },
+              membersOnWaitinglist,
               function (err2) {
                 if (err2) { return next(err2); }
 
