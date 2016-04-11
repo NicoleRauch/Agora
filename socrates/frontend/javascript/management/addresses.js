@@ -9,7 +9,7 @@ export default (props) => {
     { dataField: 'email', title: 'E-Mail' },
     { dataField: 'homeAddress', title: 'Heimatadresse' },
     { dataField: 'billingAddress', title: 'Rechnungsadresse' },
-    { dataField: 'resourceName', title: 'Ressource' }
+    { dataField: 'resourceName', title: 'Room Type' }
   ];
   const waitingColumns = [
     { dataField: 'firstname', title: 'Vorname' },
@@ -19,7 +19,7 @@ export default (props) => {
     { dataField: 'desiredRoommate', title: 'Zimmer mit' },
     { dataField: 'homeAddress', title: 'Heimatadresse' },
     { dataField: 'billingAddress', title: 'Rechnungsadresse' },
-    { dataField: 'resourceNames', title: 'Ressource' }
+    { dataField: 'resourceNames', title: 'Room Types' }
   ];
 
   const resourceNames = Object.keys(props.participants);
