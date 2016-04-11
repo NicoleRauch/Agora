@@ -3,7 +3,7 @@
 // THE ORIGINAL OF THIS FILE IS IN frontend/javascript
 
 (function () {
-  'use strict';
+
   function enhanceMemberValidator() {
     /* istanbul ignore next */
     function handler() {

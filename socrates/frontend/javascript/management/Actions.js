@@ -20,7 +20,7 @@ function fetchParticipants(callback) {
 }
 
 export function loadParticipants() {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     fetchParticipants(participants => {
       dispatch(receiveParticipants(participants));
     });
@@ -43,7 +43,7 @@ function fetchWaiting(callback) {
 }
 
 export function loadWaiting() {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     fetchWaiting(participants => {
       dispatch(receiveWaiting(participants));
     });
@@ -66,7 +66,7 @@ function fetchDurations(callback) {
 }
 
 export function loadDurations() {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     fetchDurations(durations => {
       dispatch(receiveDurations(durations));
     });

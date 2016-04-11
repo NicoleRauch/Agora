@@ -1,6 +1,6 @@
 /*global screen, moment, datepicker_lang, datepicker_format, URI, help */
 (function () {
-  'use strict';
+
   var highlightCurrentSection = function () {
     var result = URI.parse(window.location.href); // full URL
     var selections = $('[data-nav]').filter(function () {

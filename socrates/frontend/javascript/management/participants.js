@@ -18,11 +18,11 @@ export default (props) => {
     <div>
       { Object.keys(props.participants).map(resourceName => {
           const resource = props.participants[resourceName];
-          return <div key={'participants-' + resourceName}>
+          return ( <div key={'participants-' + resourceName}>
             <h4>{resourceName} ({resource.participants.length} von {resource.limit || 'unbegrenzt'})</h4>
             <DataTable data={resource.participants} columns={participantColumns}/>
-          </div>
+          </div> );
         })}
     </div>
   );
-}
+};

@@ -20,8 +20,8 @@ export default (props) => {
 
   const resourceNames = Object.keys(props.participants);
   const participants = reduce(resourceNames,
-    (participants, resourceName) =>
-      participants.concat(props.participants[resourceName].participants
+    (acc, resourceName) =>
+      acc.concat(props.participants[resourceName].participants
         .map(participant => Object.assign({ resourceName: resourceName }, participant))),
     []
   );
@@ -31,5 +31,5 @@ export default (props) => {
       <h4>Alle Teilnehmer mit Zahlungen</h4>
       <DataTable data={participants} columns={columns}/>
     </div>
-  )
-}
+  );
+};

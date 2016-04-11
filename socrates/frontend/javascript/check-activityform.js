@@ -4,7 +4,6 @@
 
 var activity_validator;
 (function () {
-  'use strict';
 
   $(document).ready(function () {
 
