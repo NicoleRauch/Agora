@@ -1,7 +1,6 @@
 'use strict';
 var moment = require('moment-timezone');
 var _ = require('lodash');
-var R = require('ramda');
 var async = require('async');
 
 var conf = require('simple-configure');
@@ -23,6 +22,7 @@ var addonLineUtilities = beans.get('socratesAddonLineUtilities');
 var Participation = beans.get('socratesParticipation');
 var roomOptions = beans.get('roomOptions');
 var managementService = beans.get('managementService');
+var managementReactService = beans.get('managementReactService');
 var nametagService = beans.get('nametagService');
 var currentUrl = beans.get('socratesConstants').currentUrl;
 var currentYear = beans.get('socratesConstants').currentYear;
@@ -211,108 +211,23 @@ app.get('/managementReact', function (req, res) {
 });
 
 app.get('/participants', function (req, res, next) {
-
-  eventstoreService.getRegistrationReadModel(currentUrl, function (err00, registrationReadModel) {
-    if (err00 || !registrationReadModel) { return next(err00); }
-    eventstoreService.getSoCraTesReadModel(currentUrl, function (err000, socratesReadModel) {
-      if (err000 || !socratesReadModel) { return next(err000); }
-
-      activityParticipantService.getParticipantsFor(currentYear, function (err_, participants) {
-        if (err_) { return next(err_); }
-        managementService.addonLinesOf(participants, function (err1, addonLines) {
-          if (err1) { return next(err1); }
-
-          var enhancedLines = R.map(line => {
-            return {
-              nickname: line.member.nickname(),
-              firstname: line.member.firstname(),
-              lastname: line.member.lastname(),
-              email: line.member.email(),
-              location: line.member.location(),
-
-              tShirtSize: line.addon.tShirtSize(),
-              homeAddress: line.addon.homeAddressLines(),
-              billingAddress: line.addon.billingAddressLines(),
-
-              desiredRoommate: line.participation.roommate(),
-
-              registered: registrationReadModel.joinedSoCraTesAt(line.member.id()),
-              duration: registrationReadModel.durationFor(line.member.id()),
-              roomType: registrationReadModel.registeredInRoomType(line.member.id())
-            };
-          }, addonLines);
-          const groupedLines = R.groupBy(l => l.roomType, enhancedLines);
-
-          const participantsByResources = R.map(roomType => {
-              return {
-                limit: socratesReadModel.quotaFor(roomType),
-                participants: groupedLines[roomType]
-              };
-            },
-            roomOptions.allIds());
-
-          res.send(participantsByResources);
-        });
-      });
-    });
+  managementReactService.participants(function (err, participants) {
+    if (err) {return next(err); }
+    res.send(participants);
   });
 });
 
 app.get('/waiting', function (req, res, next) {
-
-  eventstoreService.getRegistrationReadModel(currentUrl, function (err00, registrationReadModel) {
-    if (err00 || !registrationReadModel) { return next(err00); }
-
-    var waitinglistMembers = [];
-
-    function membersOnWaitinglist(roomType, globalCallback) {
-      async.map(registrationReadModel.allWaitinglistParticipantsIn(roomType),
-        function (entry, callback) {
-          memberstore.getMemberForId(entry.memberId, function (err2, member) {
-            if (err2 || !member) { return callback(err2); }
-            member.addedToWaitinglistAt = entry.joinedWaitinglist;
-            callback(null, member);
-          });
-        },
-        function (err2, results) {
-          if (err2) { return next(err2); }
-          waitinglistMembers.push(_.compact(results));
-          globalCallback();
-        });
-    }
-
-    async.each(roomOptions.allIds(),
-      membersOnWaitinglist,
-      function (err2) {
-        if (err2) { return next(err2); }
-
-        managementService.addonLinesOf(_.flatten(waitinglistMembers), function (err1, waitinglistLines) {
-          if (err1) { return next(err1); }
-
-          var result = _(waitinglistLines).map(function (line) {
-            return {
-              firstname: line.member.firstname(),
-              lastname: line.member.lastname(),
-              email: line.member.email(),
-              tShirtSize: line.addon.tShirtSize(),
-              desiredRoommate: line.participation.roommate(),
-              homeAddress: line.addon.homeAddressLines(),
-              billingAddress: line.addon.billingAddressLines(),
-              resourceNames: registrationReadModel.roomTypesOf(line.member.id())
-            };
-          });
-
-          res.send(result);
-        });
-      });
+  managementReactService.waiting(function (err, waiting) {
+    if (err) {return next(err); }
+    res.send(waiting);
   });
 });
 
 app.get('/durations', function (req, res, next) {
-  eventstoreService.getRegistrationReadModel(currentUrl, function (err, registrationReadModel) {
-    if (err || !registrationReadModel) { return next(err); }
-
-    res.send(managementService.durations(registrationReadModel));
+  managementReactService.durations(function (err, durations) {
+    if (err) {return next(err); }
+    res.send(durations);
   });
 });
 
