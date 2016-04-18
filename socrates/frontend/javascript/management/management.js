@@ -2,10 +2,12 @@ import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {Tab, Tabs, TabList, TabPanel} from 'react-tabs';
 
-import Addresses from './addresses.js';
-import Payments from './payments.js';
-import Participants from './participants.js';
-import * as actions from './Actions.js';
+import Addresses from './addresses';
+import Payments from './payments';
+import Participants from './participants';
+import BedOccupation from './BedOccupation';
+import Waiting from './Waiting';
+import * as actions from './Actions';
 
 export class ManagementComponent extends Component {
 
@@ -38,12 +40,14 @@ export class ManagementComponent extends Component {
               <Tab>Adressen</Tab>
             </TabList>
             <TabPanel>
-              <BedOccupation durations={this.props.durations} />
+              <BedOccupation occupations={[]} durations={this.props.durations} />
             </TabPanel>
             <TabPanel>
               <Participants participants={this.props.participants} />
             </TabPanel>
-            <TabPanel>C</TabPanel>
+            <TabPanel>
+              <Waiting waiting={this.props.waiting} />
+            </TabPanel>
             <TabPanel>
               <Payments participants={this.props.participants} />
             </TabPanel>

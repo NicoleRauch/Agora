@@ -1,15 +1,28 @@
 import React from 'react';
 import DataTable from './DataTable.js';
 
-export default (props) => {
+import {compact} from 'lodash';
+
+export default ({occupations, durations}) => {
 
   return (
-    <h4>Aufenthaltsdauer</h4>
-    <DataTable data={this.props.durations} columns={[
-  {dataField: 'duration', title: 'Option'},
-  {dataField: 'count', title: 'Count'},
-  {dataField: 'total', title: 'Total'}
-  ]}/>
+    <div>
+      <h4>Bettenbelegung</h4>
+      <DataTable data={occupations} columns={[
+  {dataField: 'roomType', title: 'Option'},
+  {dataField: 'participants', title: 'Teilnehmer'},
+  {dataField: 'freeSpots', title: 'Freie Plätze'},
+  {dataField: 'waitinglistMembers', title: 'Wartende'}
+      ]}/>
+      <hr />
+      <h4>Aufenthaltsdauer</h4>
+      <DataTable data={compact([durations['2'], durations['3'], durations['4'], durations['5']])}
+                 columns={[
+                 {dataField: 'duration', title: 'Option'},
+                 {dataField: 'count', title: 'Count'},
+                 {dataField: 'total', title: 'Total'}
+      ]}/>
+    </div>
   );
 };
 
