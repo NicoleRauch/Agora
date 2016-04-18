@@ -43,7 +43,7 @@ describe('Management Service', function () {
       ];
 
       var durations = managementService.durations(readModel);
-
+      
       expect(durations).to.have.ownKeys(['2', '3', '4', '5']);
       expect(durations[2]).to.eql({count: 6, duration: 'saturday evening', total: 14});
       expect(durations[3]).to.eql({count: 4, duration: 'sunday morning', total: 8});

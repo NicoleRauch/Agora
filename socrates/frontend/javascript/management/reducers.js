@@ -1,12 +1,14 @@
+import { combineReducers } from 'redux';
+
 import * as actions from './Actions.js';
 
 const INITIAL_STATE = {
   participants: [],
   waiting: [],
-  durations: []
+  durations: {}
 };
 
-function reduceParticipants(state = [], action = undefined) {
+function participants(state = INITIAL_STATE.participants, action = undefined) {
   switch (action.type) {
   case actions.RECEIVED_PARTICIPANTS:
     return action.payload;
@@ -15,7 +17,7 @@ function reduceParticipants(state = [], action = undefined) {
   }
 }
 
-function reduceWaiting(state = [], action = undefined) {
+function waiting(state = INITIAL_STATE.waiting, action = undefined) {
   switch (action.type) {
   case actions.RECEIVED_WAITING:
     return action.payload;
@@ -24,7 +26,7 @@ function reduceWaiting(state = [], action = undefined) {
   }
 }
 
-function durations(state = [], action = undefined) {
+function durations(state = INITIAL_STATE.durations, action = undefined) {
   switch (action.type) {
   case actions.RECEIVED_DURATIONS:
     return action.payload;
@@ -33,10 +35,8 @@ function durations(state = [], action = undefined) {
   }
 }
 
-export default function(state = INITIAL_STATE, action = undefined) {
-  return {
-    participants: reduceParticipants(state.participants, action),
-    waiting: reduceWaiting(state.waiting, action),
-    durations: durations(state.durations, action)
-  };
-}
+export default combineReducers({
+  participants,
+  waiting,
+  durations
+});
