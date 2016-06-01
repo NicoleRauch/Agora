@@ -26,15 +26,15 @@ export default ({participants}) => {
             </thead>
 
             <tbody>
-            { participantsPerRoom.participants.map((data, rindex) =>
+            { participantsPerRoom.participants.map((participant, rindex) =>
               <tr key={'trow-' + rindex}>
-                <td>{data.registeredAt}</td>
-                <td>{data.nickname}</td>
-                <td>{data.firstname}</td>
-                <td>{data.lastname}</td>
-                <td>{data.location}</td>
-                <td>{data.duration}</td>
                 <td><DurationChange/></td>
+                <td>{participant.registeredAt}</td>
+                <td>{participant.nickname}</td>
+                <td>{participant.firstname}</td>
+                <td>{participant.lastname}</td>
+                <td>{participant.location}</td>
+                <td>{participant.duration}</td>
                 <td>blank</td>
                 <td>blank</td>
               </tr>
