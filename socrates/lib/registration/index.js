@@ -209,6 +209,7 @@ app.get('/reception', function (req, res, next) {
 // for management tables:
 
 app.get('/managementReact', function (req, res) {
+  res.cookie('_csrf', req.csrfToken(), {});
   res.render('managementReact', {});
 });
 
