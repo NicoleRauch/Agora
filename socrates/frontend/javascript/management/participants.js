@@ -1,7 +1,7 @@
 import React from 'react';
 import DurationChange from './DurationChange';
 
-export default ({participants}) => {
+export default ({participants, handleDurationChange}) => {
 
   return (
     <div>
@@ -28,13 +28,13 @@ export default ({participants}) => {
             <tbody>
             { participantsPerRoom.participants.map((participant, rindex) =>
               <tr key={'trow-' + rindex}>
-                <td><DurationChange/></td>
                 <td>{participant.registeredAt}</td>
                 <td>{participant.nickname}</td>
                 <td>{participant.firstname}</td>
                 <td>{participant.lastname}</td>
                 <td>{participant.location}</td>
                 <td>{participant.duration}</td>
+                <td><DurationChange handleClick={newDuration => handleDurationChange(participant.roomType, participant.nickname, newDuration)}/></td>
                 <td>blank</td>
                 <td>blank</td>
               </tr>

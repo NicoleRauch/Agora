@@ -11,6 +11,12 @@ import * as Actions from './Actions';
 
 export class ManagementComponent extends Component {
 
+  constructor(props) {
+    super(props);
+
+    this._handleDurationChange = this._handleDurationChange.bind(this);
+  }
+
   componentDidMount() {
     this.props.dispatch(Actions.loadParticipants());
     this.props.dispatch(Actions.loadWaiting());
@@ -40,28 +46,32 @@ export class ManagementComponent extends Component {
               <Tab>Adressen</Tab>
             </TabList>
             <TabPanel>
-              <BedOccupation occupations={[]} durations={this.props.durations} />
+              <BedOccupation occupations={[]} durations={this.props.durations}/>
             </TabPanel>
             <TabPanel>
-              <Participants participants={this.props.participants} />
+              <Participants participants={this.props.participants} handleDurationChange={this._handleDurationChange}/>
             </TabPanel>
             <TabPanel>
-              <Waiting waiting={this.props.waiting} />
+              <Waiting waiting={this.props.waiting}/>
             </TabPanel>
             <TabPanel>
-              <Payments participants={this.props.participants} />
+              <Payments participants={this.props.participants}/>
             </TabPanel>
             <TabPanel>E</TabPanel>
             <TabPanel>F</TabPanel>
             <TabPanel>G</TabPanel>
             <TabPanel>H</TabPanel>
             <TabPanel>
-              <Addresses participants={this.props.participants} waiting={this.props.waiting} />
+              <Addresses participants={this.props.participants} waiting={this.props.waiting}/>
             </TabPanel>
           </Tabs>
         </div>
       </div>
     );
+  }
+
+  _handleDurationChange(roomType, nickname, newDuration) {
+    this.props.dispatch(Actions.changeDuration(roomType, nickname, newDuration));
   }
 }
 

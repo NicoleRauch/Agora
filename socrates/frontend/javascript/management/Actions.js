@@ -49,3 +49,17 @@ function fetchDurations() {
 export function loadDurations() {
   return (dispatch) => fetchDurations().map(({response: durations}) => receiveDurations(durations));
 }
+
+function submitDurationChange(roomType, nickname, duration) {
+  console.log(document.cookie);
+  return Rx.Observable.ajax({
+    url: '/activities/newDuration',
+    method: 'POST',
+    body: JSON.stringify({ roomType, nickname, duration }),
+    headers: {'X-Csrf-Token': 'abc'}
+  });
+}
+
+export function changeDuration(roomType, nickname, newDuration) {
+  return (dispatch) => submitDurationChange(roomType, nickname, newDuration).map(() => loadParticipants());
+}
