@@ -5,6 +5,10 @@ export const RECEIVED_PARTICIPANTS = 'RECEIVED_PARTICIPANTS';
 export const RECEIVED_WAITING = 'RECEIVED_WAITING';
 export const RECEIVED_DURATIONS = 'RECEIVED_DURATIONS';
 
+function csrfToken() {
+  return encodeURIComponent(document.cookie.split('; ').filter(cookie => cookie.startsWith('_csrf=')).map(cookie => cookie.split('=')[1])[0]);
+}
+
 export function receiveParticipants(participants) {
   return {
     type: RECEIVED_PARTICIPANTS,
@@ -13,7 +17,7 @@ export function receiveParticipants(participants) {
 }
 
 function fetchParticipants() {
-  return Rx.Observable.ajax({ url: '/registration/participants'});
+  return Rx.Observable.ajax({url: '/registration/participants'});
 }
 
 export function loadParticipants() {
@@ -51,12 +55,11 @@ export function loadDurations() {
 }
 
 function submitDurationChange(roomType, nickname, duration) {
-  console.log(document.cookie);
   return Rx.Observable.ajax({
     url: '/activities/newDuration',
     method: 'POST',
-    body: JSON.stringify({ roomType, nickname, duration }),
-    headers: {'X-Csrf-Token': 'abc'}
+    body: {roomType, nickname, duration},
+    headers: {'x-csrf-token': csrfToken()}
   });
 }
 
