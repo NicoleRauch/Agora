@@ -6,7 +6,9 @@ var sinon = require('sinon').sandbox.create();
 var expect = require('must-dist');
 var moment = require('moment-timezone');
 
-var beans = require('../../testutil/configureForTest').get('beans');
+const config = require('../../testutil/configureForTest');
+var beans = config.get('beans');
+var cache = config.get('cache');
 var userWithoutMember = require('../../testutil/userWithoutMember');
 var membersService = beans.get('membersService');
 var memberstore = beans.get('memberstore');
@@ -78,6 +80,7 @@ describe('SoCraTes members application', function () {
 
   beforeEach(function () {
     /* eslint camelcase: 0 */
+    cache.flushAll();
 
     eventStore = new GlobalEventStore();
     eventStore.state.socratesEvents = [
@@ -87,7 +90,8 @@ describe('SoCraTes members application', function () {
       events.roomQuotaWasSet('bed_in_junior', 10)
     ];
 
-    sinon.stub(eventstore, 'getEventStore', function (url, callback) { return callback(null, eventStore); });
+    sinon.stub(eventstore, 'getEventStore', function (url, callback) {
+      return callback(null, eventStore); });
 
     sinon.stub(memberstore, 'getMembersForIds', function (ids, callback) {
       var members = [];
@@ -166,6 +170,7 @@ describe('SoCraTes members application', function () {
     describe('displaying the associated roommate in the profile', function () {
 
       beforeEach(function () {
+
         sinon.stub(memberstore, 'getMember', function (nickname, callback) {
           if (nickname === 'hada') {
             return callback(null, softwerkskammerMember);
@@ -516,7 +521,7 @@ describe('SoCraTes members application', function () {
       appWithSoftwerkskammerMember
         .post('/submit')
         .send('id=0815&firstname=A&lastname=B')
-        .send('nickname=nickerinack')
+        .send('nickname=nickerinack&country=XX')
         .send('email=here@there.org')
         .send('homeAddress=home')
         .send('hasParticipationInformation=true')
@@ -545,7 +550,7 @@ describe('SoCraTes members application', function () {
         appWithSocratesMember
           .post('/submit')
           .send('id=0815&firstname=A&lastname=B')
-          .send('nickname=nickerinack')
+          .send('nickname=nickerinack&country=AB')
           .send('email=here@there.org')
           .send('homeAddress=home')
           .send('hasParticipationInformation=true')
@@ -581,7 +586,7 @@ describe('SoCraTes members application', function () {
       appWithSocratesMember
         .post('/submit')
         .send('id=0815&firstname=A&lastname=B')
-        .send('nickname=nickerinack')
+        .send('nickname=nickerinack&country=WW')
         .send('email=here@there.org')
         .send('homeAddress=home')
         .send('hasParticipationInformation=true')

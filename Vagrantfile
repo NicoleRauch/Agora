@@ -10,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # please see the online documentation at vagrantup.com.
 
   # Every Vagrant virtual environment requires a box to build off of.
-  config.vm.box = "chef/ubuntu-14.04"
+  config.vm.box = "bento/ubuntu-14.04"
 
   # The url from where the 'config.vm.box' box will be fetched if it
   # doesn't already exist on the user's system.
@@ -25,8 +25,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.network "forwarded_port", guest: 5858, host: 5858
 
   # forward mongodb ports from host to guest
-  config.vm.network "forwarded_port", guest: 27017, host: 27017
-  config.vm.network "forwarded_port", guest: 28017, host: 28017
+  config.vm.network "forwarded_port", guest: 27017, host: 29017
+  config.vm.network "forwarded_port", guest: 28017, host: 30017
 
   # forward application port (http) from host to guest
   config.vm.network "forwarded_port", guest: 17124, host: 17124
@@ -49,6 +49,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder ".", "/home/vagrant/agora", type:"rsync", rsync__exclude: ["node_modules", "build"], create: true
   config.vm.synced_folder "./local/gallery", "/var/local/agora/gallery", create: true
 
   # Provider-specific configuration so you can fine-tune various
@@ -131,14 +133,17 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 # optional: change apt to use a german mirror
 sed /etc/apt/sources.list -e 's|http://us.archive.ubuntu.com/|http://de.archive.ubuntu.com/|' -i
 
+
 # update package info
 apt-get update
 
+apt-get install --yes curl
+
+curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+apt-get install --yes nodejs
+
 # install needed packages
 apt-get install --yes \
-  nodejs \
-  nodejs-legacy \
-  npm \
   mongodb \
   g++ \
   git \
@@ -148,6 +153,7 @@ apt-get install --yes \
 
 # install grunt-cli using npm
 npm install -g grunt-cli
+# npm install -g phantomjs-prebuilt
 
 # create directory for image files stored in gallery microservice
 mkdir --verbose --parents /var/local/agora/gallery

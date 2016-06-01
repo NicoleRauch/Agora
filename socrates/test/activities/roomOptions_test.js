@@ -8,6 +8,7 @@ var roomOptions = beans.get('roomOptions');
 var events = beans.get('events');
 var GlobalEventStore = beans.get('GlobalEventStore');
 var RegistrationReadModel = beans.get('RegistrationReadModel');
+var SoCraTesReadModel = beans.get('SoCraTesReadModel');
 
 describe('Room Options', function () {
   describe('for a room', function () {
@@ -41,9 +42,8 @@ describe('Room Options', function () {
       var memberId3 = 'member-id-3';
 
       var roomIds = roomOptions.allIds();
-      var eventStore = new GlobalEventStore();
-      var readModel = new RegistrationReadModel(eventStore);
 
+      var eventStore = new GlobalEventStore();
       eventStore.state.socratesEvents = [
         events.roomQuotaWasSet(roomIds[0], 100),
         events.roomQuotaWasSet(roomIds[1], 1),
@@ -56,6 +56,7 @@ describe('Room Options', function () {
         events.waitinglistParticipantWasRegistered(roomIds[2], sessionId2, memberId2, moment())
       ];
 
+      var readModel = new RegistrationReadModel(eventStore, new SoCraTesReadModel(eventStore));
 
       // 0: memberId1 registered, resource is not full
       // 1: memberId2 registered, resource is full

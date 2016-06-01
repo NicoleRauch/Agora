@@ -12,6 +12,7 @@ var Member = beans.get('member');
 var memberSubmitHelper = beans.get('memberSubmitHelper');
 var subscriberstore = beans.get('subscriberstore');
 var socratesConstants = beans.get('socratesConstants');
+var allCountries = beans.get('allCountries');
 var memberstore = beans.get('memberstore');
 var statusmessage = beans.get('statusmessage');
 
@@ -19,7 +20,7 @@ var participantsOverviewUrlPrefix = '/wiki/' + socratesConstants.currentYear + '
 
 function editMember(req, res, next, returnToParticipantsListing) {
   if (!req.user.member) {
-    return res.render('edit', {member: new Member().initFromSessionUser(req.user, true)});
+    return res.render('edit', {member: new Member().initFromSessionUser(req.user, true), allCountries: allCountries.countries});
   }
   var member = req.user.member;
   var subscriber = req.user.subscriber;
@@ -32,7 +33,8 @@ function editMember(req, res, next, returnToParticipantsListing) {
       addon: subscriber && subscriber.addon().homeAddress() ? subscriber.addon() : undefined,
       participation: subscriber && subscriber.isParticipating() ? subscriber.currentParticipation() : null,
       sharesARoom: registeredResources.length === 1 && registeredResources[0].indexOf('bed_in_') > -1,
-      returnToParticipantsListing: returnToParticipantsListing
+      returnToParticipantsListing: returnToParticipantsListing,
+      allCountries: allCountries.countries
     };
     res.render('edit', options);
   });
@@ -151,7 +153,7 @@ app.get('/:nickname', function (req, res, next) {
         // only when a participant looks at their own profile!
         var registeredInRoomType = registrationReadModel.registeredInRoomType(member.id());
         var isInDoubleBedRoom = registeredInRoomType && registeredInRoomType.indexOf('bed_in_') > -1;
-        var roommateId = roomsReadModel.roommateFor(registeredInRoomType, member.id());
+        var roommateId = isInDoubleBedRoom && roomsReadModel.roommateFor(registeredInRoomType, member.id());
         memberstore.getMemberForId(roommateId, function (err4, roommate) {
           var potentialRoommates = [];
           if (err4) { return next(err4); }

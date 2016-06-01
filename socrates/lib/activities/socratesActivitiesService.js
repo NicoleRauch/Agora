@@ -3,20 +3,16 @@
 var _ = require('lodash');
 var async = require('async');
 var beans = require('simple-configure').get('beans');
+var e = beans.get('eventConstants');
 var memberstore = beans.get('memberstore');
 var eventstoreService = beans.get('eventstoreService');
 var notifications = beans.get('socratesNotifications');
 var roomOptions = beans.get('roomOptions');
-var CONFLICTING_VERSIONS = beans.get('constants').CONFLICTING_VERSIONS;
 
 var currentUrl = beans.get('socratesConstants').currentUrl;
 
 function saveCommandProcessor(args) {
-  eventstoreService.saveCommandProcessor(args.commandProcessor, function (err) {
-    if (err && err.message === CONFLICTING_VERSIONS) {
-      // we try again because of a racing condition during save:
-      return args.repeat(args.callback);
-    }
+  eventstoreService.saveCommandProcessor(args.commandProcessor, args.events, function (err) {
     if (err) { return args.callback(err); }
     if (args.handleSuccess) { args.handleSuccess(); }
     return args.callback();
@@ -26,201 +22,218 @@ function saveCommandProcessor(args) {
 module.exports = {
 
   fromWaitinglistToParticipant: function (nickname, roomType, duration, now, callback) {
-    var self = this;
-
-    async.parallel(
-      {
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        member: _.partial(memberstore.getMember, nickname)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, nickname),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.registrationCommandProcessor || !results.member) { return callback(err); }
+        if (err) { return callback(err); }
+        const member = results[0];
+        const registrationCommandProcessor = results[1];
+        if (!registrationCommandProcessor || !member) { return callback(); }
 
-        results.registrationCommandProcessor.fromWaitinglistToParticipant(roomType, results.member.id(), duration, now);
+        const event = registrationCommandProcessor.fromWaitinglistToParticipant(roomType, member.id(), duration, now);
 
-        saveCommandProcessor({
-          commandProcessor: results.registrationCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.fromWaitinglistToParticipant, nickname, roomType, duration, now),
-          handleSuccess: function () {
+        const args = {commandProcessor: registrationCommandProcessor, events: [event], callback: callback};
+
+        if (event.event === e.PARTICIPANT_WAS_REGISTERED || event.event === e.REGISTERED_PARTICIPANT_FROM_WAITINGLIST) {
+          args.handleSuccess = function () {
             var bookingdetails = roomOptions.informationFor(roomType, duration);
             bookingdetails.fromWaitinglist = true;
-            notifications.newParticipant(results.member.id(), bookingdetails);
-          }
-        });
+            notifications.newParticipant(member.id(), bookingdetails);
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   },
 
   newDurationFor: function (nickname, roomType, duration, callback) {
-    var self = this;
 
-    async.parallel(
-      {
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        member: _.partial(memberstore.getMember, nickname)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, nickname),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.registrationCommandProcessor || !results.member) { return callback(err); }
+        if (err) { return callback(err); }
+        const member = results[0];
+        const registrationCommandProcessor = results[1];
+        if (!registrationCommandProcessor || !member) { return callback(); }
 
-        results.registrationCommandProcessor.setNewDurationForParticipant(results.member.id(), duration);
+        const event = registrationCommandProcessor.setNewDurationForParticipant(member.id(), duration);
 
-        saveCommandProcessor({
-          commandProcessor: results.registrationCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.newDurationFor, nickname, roomType, duration),
-          handleSuccess: function () {
-            notifications.changedDuration(results.member, roomOptions.informationFor(roomType, duration));
-          }
-        });
+        const args = {commandProcessor: registrationCommandProcessor, events: [event], callback: callback};
+
+        if (event.event === e.DURATION_WAS_CHANGED) {
+          args.handleSuccess = function () {
+            notifications.changedDuration(member, roomOptions.informationFor(roomType, duration));
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   },
 
   newRoomTypeFor: function (nickname, newRoomType, callback) {
-    var self = this;
 
-    async.parallel(
-      {
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        member: _.partial(memberstore.getMember, nickname)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, nickname),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.registrationCommandProcessor || !results.member) { return callback(err); }
+        if (err) { return callback(err); }
+        const member = results[0];
+        const registrationCommandProcessor = results[1];
+        if (!registrationCommandProcessor || !member) { return callback(); }
 
-        var event = results.registrationCommandProcessor.moveParticipantToNewRoomType(results.member.id(), newRoomType);
+        const event = registrationCommandProcessor.moveParticipantToNewRoomType(member.id(), newRoomType);
 
-        saveCommandProcessor({
-          commandProcessor: results.registrationCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.newRoomTypeFor, nickname, newRoomType),
-          handleSuccess: function () {
-            notifications.changedResource(results.member, roomOptions.informationFor(newRoomType, event.duration)); // this is a bit hacky, we should better go through a read model
-          }
-        });
+        const args = {commandProcessor: registrationCommandProcessor, events: [event], callback: callback};
+
+        if (event.event === e.ROOM_TYPE_WAS_CHANGED) {
+          args.handleSuccess = function () {
+            notifications.changedResource(member, roomOptions.informationFor(newRoomType, event.duration)); // this is a bit hacky, we should better go through a read model
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   },
 
-  newWaitinglistFor: function (nickname, newResourceName, callback) {
-    var self = this;
+  newWaitinglistFor: function (nickname, newDesiredResourceNames, callback) {
 
-    async.parallel(
-      {
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        member: _.partial(memberstore.getMember, nickname)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, nickname),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.activity || !results.member) { return callback(err); }
+        if (err) { return callback(err); }
+        const member = results[0];
+        const registrationCommandProcessor = results[1];
+        if (!registrationCommandProcessor || !member) { return callback(); }
 
-        results.registrationCommandProcessor.changeDesiredRoomTypes(results.member.id(), [newResourceName]);
+        const event = registrationCommandProcessor.changeDesiredRoomTypes(member.id(), newDesiredResourceNames);
 
-        saveCommandProcessor({
-          commandProcessor: results.registrationCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.newWaitinglistFor, nickname, newResourceName),
-          handleSuccess: function () {
-            notifications.changedWaitinglist(results.member, roomOptions.informationFor(newResourceName, 'waitinglist'));
-          }
-        });
+        const args = {commandProcessor: registrationCommandProcessor, events: [event], callback: callback};
+
+        if (event.event === e.DESIRED_ROOM_TYPES_WERE_CHANGED) {
+          args.handleSuccess = function () {
+            notifications.changedWaitinglist(member, newDesiredResourceNames.map(name => roomOptions.informationFor(name, 'waitinglist')));
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   },
 
   addParticipantPairFor: function (roomType, participant1Nick, participant2Nick, callback) {
-    var self = this;
 
-    async.parallel(
-      {
-        roomsCommandProcessor: _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl),
-        participant1: _.partial(memberstore.getMember, participant1Nick),
-        participant2: _.partial(memberstore.getMember, participant2Nick)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, participant1Nick),
+        _.partial(memberstore.getMember, participant2Nick),
+        _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.roomsCommandProcessor || !results.participant1 || !results.participant2) { return callback(err); }
+        if (err) { return callback(err); }
+        const participant1 = results[0];
+        const participant2 = results[1];
+        const roomsCommandProcessor = results[2];
+        if (!roomsCommandProcessor || !participant1 || !participant2) { return callback(); }
 
-        results.roomsCommandProcessor.addParticipantPairFor(roomType, results.participant1.id(), results.participant2.id());
+        const events = roomsCommandProcessor.addParticipantPairFor(roomType, participant1.id(), participant2.id());
 
         saveCommandProcessor({
-          commandProcessor: results.roomsCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.addParticipantPairFor, roomType, participant1Nick, participant2Nick)
+          commandProcessor: roomsCommandProcessor,
+          events: events,
+          callback: callback
         });
       }
     );
   },
 
   removeParticipantPairFor: function (roomType, participant1Nick, participant2Nick, callback) {
-    var self = this;
 
-    async.parallel(
-      {
-        roomsCommandProcessor: _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl),
-        participant1: _.partial(memberstore.getMember, participant1Nick),
-        participant2: _.partial(memberstore.getMember, participant2Nick)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, participant1Nick),
+        _.partial(memberstore.getMember, participant2Nick),
+        _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.roomsCommandProcessor || !results.participant1 || !results.participant2) { return callback(err); }
+        if (err) { return callback(err); }
+        const participant1 = results[0];
+        const participant2 = results[1];
+        const roomsCommandProcessor = results[2];
+        if (!roomsCommandProcessor || !participant1 || !participant2) { return callback(); }
 
-        results.roomsCommandProcessor.removeParticipantPairFor(roomType, results.participant1.id(), results.participant2.id());
+        const events = roomsCommandProcessor.removeParticipantPairFor(roomType, participant1.id(), participant2.id());
 
         saveCommandProcessor({
-          commandProcessor: results.roomsCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.removeParticipantPairFor, roomType, participant1Nick, participant2Nick)
+          commandProcessor: roomsCommandProcessor,
+          events: events,
+          callback: callback
         });
       }
     );
   },
 
   removeParticipantFor: function (roomType, participantNick, callback) {
-    var self = this;
 
-    async.parallel(
-      {
-        roomsCommandProcessor: _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl),
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        participant: _.partial(memberstore.getMember, participantNick)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, participantNick),
+        _.partial(eventstoreService.getRoomsCommandProcessor, currentUrl).bind(eventstoreService),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.roomsCommandProcessor || !results.registrationCommandProcessor || !results.participant) { return callback(err); }
+        if (err) { return callback(err); }
+        const participant = results[0];
+        const roomsCommandProcessor = results[1];
+        const registrationCommandProcessor = results[2];
+        if (!roomsCommandProcessor || !registrationCommandProcessor || !participant) { return callback(); }
 
-        results.roomsCommandProcessor.removeParticipantPairContaining(roomType, results.participant.id());
-        results.registrationCommandProcessor.removeParticipant(roomType, results.participant.id());
+        const roomsEvents = roomsCommandProcessor.removeParticipantPairContaining(roomType, participant.id());
+        const registrationEvent = registrationCommandProcessor.removeParticipant(roomType, participant.id());
 
-        saveCommandProcessor({
-          commandProcessor: results.roomsCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.removeParticipantFor, roomType, participantNick),
-          handleSuccess: function () {
-            notifications.removedFromParticipants(results.participant);
-          }
-        });
+        const args = {commandProcessor: [roomsCommandProcessor, registrationCommandProcessor], events: [roomsEvents, [registrationEvent]], callback: callback};
+        if (registrationEvent.event === e.PARTICIPANT_WAS_REMOVED) {
+          args.handleSuccess = function () {
+            notifications.removedFromParticipants(participant);
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   },
 
-  removeWaitinglistMemberFor: function (roomType, waitinglistMemberNick, callback) {
-    var self = this;
+  removeWaitinglistMemberFor: function (desiredRoomTypes, waitinglistMemberNick, callback) {
 
-    async.parallel(
-      {
-        registrationCommandProcessor: _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl),
-        waitinglistMember: _.partial(memberstore.getMember, waitinglistMemberNick)
-      },
+    async.series(
+      [
+        _.partial(memberstore.getMember, waitinglistMemberNick),
+        _.partial(eventstoreService.getRegistrationCommandProcessor, currentUrl).bind(eventstoreService)
+      ],
       function (err, results) {
-        if (err || !results.registrationCommandProcessor || !results.waitinglistMember) { return callback(err); }
+        if (err) { return callback(err); }
+        const waitinglistMember = results[0];
+        const registrationCommandProcessor = results[1];
+        if (!registrationCommandProcessor || !waitinglistMember) { return callback(); }
 
-        results.registrationCommandProcessor.removeWaitinglistParticipant(roomType, results.waitinglistMember.id());
+        const event = registrationCommandProcessor.removeWaitinglistParticipant(desiredRoomTypes, waitinglistMember.id());
 
-        saveCommandProcessor({
-          commandProcessor: results.registrationCommandProcessor,
-          callback: callback,
-          repeat: _.partial(self.removeWaitinglistMemberFor, roomType, waitinglistMemberNick),
-          handleSuccess: function () {
-            notifications.removedFromWaitinglist(results.waitinglistMember);
-          }
-        });
+        const args = {commandProcessor: registrationCommandProcessor, events: [event], callback: callback};
+
+        if (event.event === e.WAITINGLIST_PARTICIPANT_WAS_REMOVED) {
+          args.handleSuccess = function () {
+            notifications.removedFromWaitinglist(waitinglistMember);
+          };
+        }
+        saveCommandProcessor(args);
       }
     );
   }

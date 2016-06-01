@@ -25,8 +25,8 @@ var app = misc.expressAppIn(__dirname);
 function activitySubmitted(req, res, next) {
   eventstoreService.getSoCraTesCommandProcessor(req.body.previousUrl, function (err, socratesCommandProcessor) {
     if (err) { return next(err); }
-    socratesCommandProcessor.setConferenceDetails(req.body);
-    eventstoreService.saveCommandProcessor(socratesCommandProcessor, function (err1) {
+    const events = socratesCommandProcessor.setConferenceDetails(req.body);
+    eventstoreService.saveCommandProcessor(socratesCommandProcessor, events, function (err1) {
       if (err1 && err1.message === CONFLICTING_VERSIONS) {
         // we try again because of a racing condition during save:
         statusmessage.errorMessage('message.title.conflict', 'message.content.save_error_retry').putIntoSession(req);
@@ -35,7 +35,6 @@ function activitySubmitted(req, res, next) {
       if (err1) { return next(err1); }
 
       // update the activity because we need it for the display in the SWK calendar
-      // TODO SWK must not create activities whose URLs start with 'socrates-'!
       activitiesService.getActivityWithGroupAndParticipants(req.body.previousUrl, function (err2, activity) { // here we need a real activity
         if (err2) { return next(err2); }
         if (!activity) { activity = new Activity({owner: req.user.member.id()}); }
@@ -130,7 +129,12 @@ app.post('/newResource', function (req, res, next) {
 });
 
 app.post('/newWaitinglist', function (req, res, next) {
-  socratesActivitiesService.newWaitinglistFor(req.body.nickname, req.body.newResourceName, function (err) {
+  var waitinglistOptions = 'waitinglistOptions_' + encodeURIComponent(req.body.nickname);
+  var desiredRoomTypes = req.body[waitinglistOptions];
+  if (desiredRoomTypes && !(desiredRoomTypes instanceof Array)) {
+    desiredRoomTypes = [desiredRoomTypes];
+  }
+  socratesActivitiesService.newWaitinglistFor(req.body.nickname, desiredRoomTypes, function (err) {
     if (err) {return next(err); }
     res.redirect('/registration/management');
   });
@@ -158,7 +162,7 @@ app.post('/removeParticipant', function (req, res, next) {
 });
 
 app.post('/removeWaitinglistMember', function (req, res, next) {
-  socratesActivitiesService.removeWaitinglistMemberFor(req.body.roomType, req.body.waitinglistMember, function (err) {
+  socratesActivitiesService.removeWaitinglistMemberFor([req.body.roomType], req.body.waitinglistMember, function (err) {
     if (err) { return next(err); }
     res.redirect('/registration/management');
   });

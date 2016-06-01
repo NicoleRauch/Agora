@@ -8,6 +8,7 @@ var R = require('ramda');
 
 var conf = require('../../testutil/configureForTest');
 var beans = conf.get('beans');
+const cache = conf.get('cache');
 var userWithoutMember = require('../../testutil/userWithoutMember');
 
 var groupsAndMembersService = beans.get('groupsAndMembersService');
@@ -26,7 +27,6 @@ var eventstore = beans.get('eventstore');
 var createApp = require('../../testutil/testHelper')('socratesRegistrationApp').createApp;
 
 var aShortTimeAgo = moment.tz().subtract(10, 'minutes');
-var aLongTimeAgo = moment.tz().subtract(40, 'minutes');
 
 function stripTimestampsAndJoins(someEvents) {
   return someEvents.map(event => {
@@ -61,6 +61,8 @@ describe('SoCraTes registration application', function () {
   var eventStore;
 
   beforeEach(function () {
+    cache.flushAll();
+
     eventStore = new GlobalEventStore();
     eventStore.state.socratesEvents = [
       events.roomQuotaWasSet('single', 0),
@@ -314,6 +316,7 @@ describe('SoCraTes registration application', function () {
         .send('roomType=single')
         .send('duration=5')
         .send('desiredRoomTypes=')
+        .send('country=XX')
         .send('homeAddress=At home')
         .send('billingAddress=')
         .send('tShirtSize=XXXL')
@@ -335,160 +338,13 @@ describe('SoCraTes registration application', function () {
 
     });
 
-    it('is still accepted as participant even when the timeout is expired, if there is enough space in the resource', function (done) {
-      eventStore.state.registrationEvents = [
-        events.reservationWasIssued('junior', 3, 'session-id', 'memberId2', aLongTimeAgo)];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=junior')
-        .send('duration=3')
-        .send('desiredRoomTypes=')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.RESERVATION_WAS_ISSUED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'junior', duration: 3},
-            {event: e.PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'junior', duration: 3}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is still accepted as participant even when there is no reservation, if there is enough space in the resource', function (done) {
-      eventStore.state.registrationEvents = [];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=junior')
-        .send('duration=3')
-        .send('desiredRoomTypes=')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'junior', duration: 3}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is not accepted as participant when the timeout is expired and there is not enough space in the resource', function (done) {
-      eventStore.state.registrationEvents = [
-        events.reservationWasIssued('single', 3, 'session-id', 'memberId2', aLongTimeAgo)];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=single')
-        .send('duration=3')
-        .send('desiredRoomTypes=')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.RESERVATION_WAS_ISSUED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'single', duration: 3},
-            {event: e.DID_NOT_REGISTER_PARTICIPANT_FOR_FULL_RESOURCE, sessionId: 'session-id', roomType: 'single', duration: 3, memberId: 'memberId2'}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is not accepted as participant when there is no reservation and there is not enough space in the resource', function (done) {
-      eventStore.state.registrationEvents = [];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=single')
-        .send('duration=3')
-        .send('desiredRoomTypes=')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.DID_NOT_REGISTER_PARTICIPANT_FOR_FULL_RESOURCE, sessionId: 'session-id', roomType: 'single', duration: 3, memberId: 'memberId2'}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is not accepted if already registered', function (done) {
-      eventStore.state.registrationEvents = [
-        events.participantWasRegistered('junior', 5, 'session-id', 'memberId2', aShortTimeAgo)
-      ];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=junior')
-        .send('duration=5')
-        .send('desiredRoomTypes=')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'junior', duration: 5},
-            {event: e.DID_NOT_REGISTER_PARTICIPANT_A_SECOND_TIME, sessionId: 'session-id', roomType: 'junior', duration: 5, memberId: 'memberId2'}
-          ]);
-          done(err);
-        });
-
-    });
-
   });
 
   describe('submission of the participate form to become a waitinglist participant', function () {
     it('is accepted when a waitinglist option is selected', function (done) {
       eventStore.state.registrationEvents = [
-        events.waitinglistReservationWasIssued(['single'], 'session-id', 'memberId', aShortTimeAgo)];
+        events.waitinglistReservationWasIssued(['single'], 'session-id', 'memberId', aShortTimeAgo)
+      ];
 
       appWithSocratesMemberAndFixedSessionId
         .post('/completeRegistration')
@@ -496,6 +352,7 @@ describe('SoCraTes registration application', function () {
         .send('roomType=')
         .send('duration=')
         .send('desiredRoomTypes=single')
+        .send('country=ZZ')
         .send('homeAddress=At home')
         .send('billingAddress=')
         .send('tShirtSize=XXXL')
@@ -511,66 +368,6 @@ describe('SoCraTes registration application', function () {
           expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
             {event: e.WAITINGLIST_RESERVATION_WAS_ISSUED, sessionId: 'session-id', desiredRoomTypes: ['single'], memberId: 'memberId'},
             {event: e.WAITINGLIST_PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', desiredRoomTypes: ['single'], memberId: 'memberId2'}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is still accepted to the waitinglist even when the timeout is expired', function (done) {
-      eventStore.state.registrationEvents = [
-        events.waitinglistReservationWasIssued(['single'], 'session-id', 'memberId', aLongTimeAgo)];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=')
-        .send('duration=')
-        .send('desiredRoomTypes=single')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.WAITINGLIST_RESERVATION_WAS_ISSUED, sessionId: 'session-id', desiredRoomTypes: ['single'], memberId: 'memberId'},
-            {event: e.WAITINGLIST_PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', desiredRoomTypes: ['single'], memberId: 'memberId2'}
-          ]);
-          done(err);
-        });
-    });
-
-    it('is not accepted to the waitinglist a second time', function (done) {
-      eventStore.state.registrationEvents = [
-        events.waitinglistParticipantWasRegistered(['single'], 'session-id', 'memberId2', aShortTimeAgo)];
-
-      appWithSocratesMemberAndFixedSessionId
-        .post('/completeRegistration')
-        .send('activityUrl=socrates-url')
-        .send('roomType=')
-        .send('duration=')
-        .send('desiredRoomTypes=junior')
-        .send('homeAddress=At home')
-        .send('billingAddress=')
-        .send('tShirtSize=XXXL')
-        .send('remarks=vegan')
-        .send('roommate=My buddy')
-        .send('hasParticipationInformation=true')
-        .send('previousNickname=Nick&nickname=Nick')
-        .send('previousEmail=me@you.com&email=me@you.com')
-        .send('firstname=Peter&lastname=Miller')
-        .expect(302)
-        .expect('location', '/registration', function (err) {
-          expect(eventStoreSave.called).to.be(true);
-          expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.WAITINGLIST_PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', desiredRoomTypes: ['single'], memberId: 'memberId2'},
-            {event: e.DID_NOT_REGISTER_WAITINGLIST_PARTICIPANT_A_SECOND_TIME, sessionId: 'session-id', desiredRoomTypes: ['junior'], memberId: 'memberId2'}
           ]);
           done(err);
         });
@@ -579,7 +376,10 @@ describe('SoCraTes registration application', function () {
 
   describe('submission of the participate form to book a room and to become a waitinglist participant', function () {
     it('is accepted when a room and at least a waitinglist option is selected', function (done) {
-      eventStore.state.registrationEvents = [];
+      eventStore.state.registrationEvents = [
+        events.reservationWasIssued('bed_in_double', 2, 'session-id', 'memberId', aShortTimeAgo),
+        events.waitinglistReservationWasIssued(['single', 'junior'], 'session-id', 'memberId', aShortTimeAgo)
+      ];
 
       appWithSocratesMemberAndFixedSessionId
         .post('/completeRegistration')
@@ -587,6 +387,7 @@ describe('SoCraTes registration application', function () {
         .send('roomType=bed_in_double')
         .send('duration=2')
         .send('desiredRoomTypes=single,junior')
+        .send('country=UU')
         .send('homeAddress=At home')
         .send('billingAddress=')
         .send('tShirtSize=XXXL')
@@ -600,8 +401,10 @@ describe('SoCraTes registration application', function () {
         .expect('location', '/registration', function (err) {
           expect(eventStoreSave.called).to.be(true);
           expect(stripTimestampsAndJoins(eventStore.state.registrationEvents)).to.eql([
-            {event: e.WAITINGLIST_PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', desiredRoomTypes: ['single', 'junior'], memberId: 'memberId2'},
-            {event: e.PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'bed_in_double', duration: 2}
+            {event: e.RESERVATION_WAS_ISSUED, sessionId: 'session-id', memberId: 'memberId', roomType: 'bed_in_double', duration: 2},
+            {event: e.WAITINGLIST_RESERVATION_WAS_ISSUED, sessionId: 'session-id', desiredRoomTypes: ['single', 'junior'], memberId: 'memberId'},
+            {event: e.PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', memberId: 'memberId2', roomType: 'bed_in_double', duration: 2},
+            {event: e.WAITINGLIST_PARTICIPANT_WAS_REGISTERED, sessionId: 'session-id', desiredRoomTypes: ['single', 'junior'], memberId: 'memberId2'}
           ]);
           done(err);
         });

@@ -1,11 +1,12 @@
 'use strict';
 var moment = require('moment-timezone');
-var _ = require('lodash');
 var async = require('async');
+var R = require('ramda');
 
 var conf = require('simple-configure');
 var beans = conf.get('beans');
 var misc = beans.get('misc');
+var allCountries = beans.get('allCountries');
 var memberstore = beans.get('memberstore');
 var Member = beans.get('member');
 var subscriberstore = beans.get('subscriberstore');
@@ -160,7 +161,8 @@ app.get('/participate', function (req, res, next) {
         participation: participation,
         registrationTuple: registrationTuple,
         expiresIn: expiresAt && expiresAt.diff(moment(), 'minutes'),
-        expiresAt: expiresAt
+        expiresAt: expiresAt,
+        allCountries: allCountries.countries
       });
     });
   });
@@ -170,7 +172,7 @@ app.post('/completeRegistration', function (req, res, next) {
   memberSubmitHelper(req, res, next, function (err) {
     if (err) { return next(err); }
     var body = req.body;
-    registrationService.completeRegistration(req.user.member.id(), req.sessionID, body, moment.tz(), function (err1, statusTitle, statusText) {
+    registrationService.completeRegistration(req.user.member.id(), req.sessionID, body, function (err1, statusTitle, statusText) {
       if (err1) { return next(err1); }
       delete req.session.statusmessage;
       delete req.session.registrationTuple;
@@ -248,109 +250,77 @@ app.get('/management', function (req, res, next) {
           managementService.addonLinesOf(participants, function (err1, addonLines) {
             if (err1) { return next(err1); }
 
-            var formatDate = function (date) {
-              return moment(date).locale('de').format('L');
-            };
-            var formatList = function (list) {
-              return list.join(', ');
-            };
+            activityParticipantService.getWaitinglistParticipantsFor(currentYear, function (err17, waitinglistParticipants) {
+              if (err17) { return next(err17); }
+              managementService.addonLinesOf(waitinglistParticipants, function (err18, waitinglistAddonLines) {
+                if (err18) { return next(err18); }
 
-            var waitinglistMembers = [];
+                var formatDate = function (date) {
+                  return moment(date).locale('de').format('L');
+                };
+                var formatDateTime = function (date) {
+                  return moment(date).locale('de').format('D.M.YY H:mm');
+                };
+                var formatList = function (list) {
+                  return list.join(', ');
+                };
 
-            function membersOnWaitinglist(roomType, globalCallback) {
-              async.map(registrationReadModel.allWaitinglistParticipantsIn(roomType),
-                function (entry, callback) {
-                  memberstore.getMemberForId(entry.memberId, function (err2, member) {
-                    if (err2 || !member) { return callback(err2); }
-                    member.addedToWaitinglistAt = entry.joinedWaitinglist;
-                    callback(null, member);
-                  });
-                },
-                function (err2, results) {
-                  if (err2) { return next(err2); }
-                  waitinglistMembers.push(_.compact(results));
-                  globalCallback();
-                });
-            }
+                subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsWithoutRoomIn('bed_in_double'), function (errA, unpairedDoubleParticipants) {
+                  if (errA) { return next(errA); }
+                  subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsWithoutRoomIn('bed_in_junior'), function (errB, unpairedJuniorParticipants) {
+                    if (errB) { return next(errB); }
+                    subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsInRoom('bed_in_double'), function (errC, pairedDoubleParticipants) {
+                      if (errC) { return next(errC); }
+                      subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsInRoom('bed_in_junior'), function (errD, pairedJuniorParticipants) {
+                        if (errD) { return next(errD); }
 
-            async.each(roomOptions.allIds(),
-              membersOnWaitinglist,
-              function (err2) {
-                if (err2) { return next(err2); }
+                        var participantLinesOf = {};
+                        roomOptions.allIds().forEach(roomType => { participantLinesOf[roomType] = []; });
+                        addonLines.forEach(line => {
+                          registrationReadModel.roomTypesOf(line.member.id()).forEach(roomType => { participantLinesOf[roomType].push(line); });
+                        });
 
-                managementService.addonLinesOf(_.flatten(waitinglistMembers), function (err3, waitinglistLines) {
-                  if (err3 || !waitinglistLines) { return next(err3); }
+                        var waitinglistLinesOf = {};
+                        roomOptions.allIds().forEach(roomType => { waitinglistLinesOf[roomType] = []; });
+                        waitinglistAddonLines.forEach(line => {
+                          registrationReadModel.roomTypesOf(line.member.id()).forEach(roomType => { waitinglistLinesOf[roomType].push(line); });
+                        });
 
-                  subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsWithoutRoomIn('bed_in_double'), function (errA, unpairedDoubleParticipants) {
-                    if (errA) { return next(errA); }
-                    subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsWithoutRoomIn('bed_in_junior'), function (errB, unpairedJuniorParticipants) {
-                      if (errB) { return next(errB); }
-                      subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsInRoom('bed_in_double'), function (errC, pairedDoubleParticipants) {
-                        if (errC) { return next(errC); }
-                        subscriberService.getMembersAndSubscribersForIds(roomsReadModel.participantsInRoom('bed_in_junior'), function (errD, pairedJuniorParticipants) {
-                          if (errD) { return next(errD); }
-                          subscriberstore.allSubscribers(function (errE, subscribers) {
-                            if (errE) { return next(errE); }
-                            var currentYearSubscribers = _.filter(subscribers, function (subscriber) { return subscriber.isParticipating(); });
-                            var cysThatAreNotParticipants = _.filter(currentYearSubscribers, function (subscriber) {
-                              return !_.find(participants, function (participant) { return participant.id() === subscriber.id(); });
-                            });
-                            var neitherParticipantsNorOnWaitinglist = _.filter(cysThatAreNotParticipants, function (subscriber) {
-                              return !_.find(_.flatten(waitinglistMembers), function (wlMember) { return wlMember.id() === subscriber.id(); });
-                            });
-                            subscriberService.getMembersForSubscribers(_.flatten(neitherParticipantsNorOnWaitinglist), function (errF, exParticipants) {
-                              if (errF || !exParticipants) { return next(errF); }
-
-                              var addonLinesOfExParticipants = managementService.addonLinesOfMembersWithSubscribers(exParticipants);
-
-                              var participantsOf = {};
-                              async.each(roomOptions.allIds(), function (roomType, callback) {
-                                memberstore.getMembersForIds(registrationReadModel.allParticipantsIn(roomType), function (errG, members) {
-                                  if (errG || !members) { return callback(errG); }
-                                  participantsOf[roomType] = members;
-                                  return callback(null);
-                                });
-                              }, function (errX) {
-                                if (errX) { return next(errX); }
-
-                                /* eslint camelcase: 0 */
-                                res.render('managementTables', {
-                                  participantsOf: participantsOf,
-                                  title: 'SoCraTes ' + currentYear,
-                                  roomsReadModel: roomsReadModel,
-                                  registrationReadModel: registrationReadModel,
-                                  socratesReadModel: socratesReadModel,
-                                  roomOptionIds: roomOptions.allIds(),
-                                  addonLines: addonLines,
-                                  waitinglistLines: waitinglistLines,
-                                  addonLinesOfUnsubscribedMembers: addonLinesOfExParticipants,
-                                  tshirtsizes: managementService.tshirtSizes(addonLines),
-                                  durations: managementService.durations(registrationReadModel),
-                                  rooms: {
-                                    bed_in_double: {
-                                      unpairedParticipants: unpairedDoubleParticipants,
-                                      roomPairs: roomsReadModel.roomPairsWithFullMembersFrom('bed_in_double', pairedDoubleParticipants)
-                                    },
-                                    bed_in_junior: {
-                                      unpairedParticipants: unpairedJuniorParticipants,
-                                      roomPairs: roomsReadModel.roomPairsWithFullMembersFrom('bed_in_junior', pairedJuniorParticipants)
-                                    }
-                                  },
-                                  formatDate: formatDate,
-                                  formatList: formatList
-                                });
-                              });
-                            });
-                          });
+                        /* eslint camelcase: 0 */
+                        res.render('managementTables', {
+                          title: 'SoCraTes ' + currentYear,
+                          roomsReadModel: roomsReadModel,
+                          registrationReadModel: registrationReadModel,
+                          socratesReadModel: socratesReadModel,
+                          roomOptionIds: roomOptions.allIds(),
+                          addonLines: addonLines,
+                          participantLinesOf: participantLinesOf,
+                          waitinglistLines: waitinglistAddonLines,
+                          waitinglistLinesOf: waitinglistLinesOf,
+                          tshirtsizes: managementService.tshirtSizes(addonLines),
+                          durations: managementService.durations(registrationReadModel),
+                          rooms: {
+                            bed_in_double: {
+                              unpairedParticipants: R.sortBy(participant => participant.displayName(), unpairedDoubleParticipants),
+                              roomPairs: roomsReadModel.roomPairsWithFullMembersFrom('bed_in_double', pairedDoubleParticipants)
+                            },
+                            bed_in_junior: {
+                              unpairedParticipants: R.sortBy(participant => participant.displayName(), unpairedJuniorParticipants),
+                              roomPairs: roomsReadModel.roomPairsWithFullMembersFrom('bed_in_junior', pairedJuniorParticipants)
+                            }
+                          },
+                          formatDate: formatDate,
+                          formatDateTime: formatDateTime,
+                          formatList: formatList
                         });
                       });
                     });
                   });
                 });
               });
+            });
           });
         });
-
       });
     });
   });
@@ -390,7 +360,7 @@ app.get('/hotelInfo', function (req, res, next) {
 
                     res.render('hotelInfoTables', {
                       participantsOf: participantsOf,
-                      registrationReadModel: registrationReadModel,
+                      _registrationReadModel: registrationReadModel,
                       addonLines: addonLines,
                       rooms: {
                         bed_in_double: {

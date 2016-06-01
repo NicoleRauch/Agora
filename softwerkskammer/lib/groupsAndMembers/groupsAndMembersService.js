@@ -52,7 +52,7 @@ function updateAndSaveSubmittedMember(self, sessionUser, memberformData, accessr
     member.addAuthentication(memberformData.id);
     if (accessrights.isSuperuser()) { member.addAuthentication(memberformData.additionalAuthentication); }
     member.fillFromUI(memberformData);
-    member.state.socratesOnly = !updateSubscriptions; // SoCraTes creates members with "false", Softwerkskammer with "true"
+    member.state.socratesOnly = !updateSubscriptions && !member.location(); // SoCraTes creates members with "false", Softwerkskammer with "true"
     memberstore.saveMember(member, function (err1) {
       if (err1) { return callback(err1); }
       if (!sessionUser.member || sessionUser.member.id() === member.id()) {
@@ -158,7 +158,7 @@ module.exports = {
       var adminListName = conf.get('adminListName');
       groupsService.getMailinglistUsersOfList(adminListName, function (err2, emailAddresses) {
         if (err2) { return callback(err2); }
-        var isInAdminList = _.contains(emailAddresses, member.email());
+        var isInAdminList = _.includes(emailAddresses, member.email());
         if (member.isContactperson() && !isInAdminList) {
           return groupsService.addUserToList(member.email(), adminListName, callback);
         }

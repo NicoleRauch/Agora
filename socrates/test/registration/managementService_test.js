@@ -7,6 +7,7 @@ var beans = require('../../testutil/configureForTest').get('beans');
 var events = beans.get('events');
 var GlobalEventStore = beans.get('GlobalEventStore');
 var RegistrationReadModel = beans.get('RegistrationReadModel');
+var SoCraTesReadModel = beans.get('SoCraTesReadModel');
 
 var managementService = beans.get('managementService');
 
@@ -17,11 +18,9 @@ describe('Management Service', function () {
   describe('when calculating durations', function () {
 
     var eventStore;
-    var readModel;
 
     beforeEach(function () {
       eventStore = new GlobalEventStore();
-      readModel = new RegistrationReadModel(eventStore);
     });
 
     it('counts each value', function () {
@@ -41,6 +40,7 @@ describe('Management Service', function () {
         events.participantWasRegistered('junior', 2, 'session-id', 'member-id13', aLongTimeAgo),
         events.participantWasRegistered('junior', 3, 'session-id', 'member-id14', aLongTimeAgo)
       ];
+      const readModel = new RegistrationReadModel(eventStore, new SoCraTesReadModel(eventStore));
 
       var durations = managementService.durations(readModel);
 
@@ -60,6 +60,7 @@ describe('Management Service', function () {
         events.participantWasRegistered('junior', 2, 'session-id', 'member-id5', aLongTimeAgo),
         events.participantWasRegistered('junior', 4, 'session-id', 'member-id6', aLongTimeAgo)
       ];
+      const readModel = new RegistrationReadModel(eventStore, new SoCraTesReadModel(eventStore));
 
       var durations = managementService.durations(readModel);
 
