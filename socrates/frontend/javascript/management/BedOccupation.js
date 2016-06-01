@@ -7,7 +7,7 @@ export default ({occupations, durations}) => {
 
   return (
     <div>
-      <h4>Bettenbelegung</h4>
+      <h4>Occupations of Beds</h4>
       <DataTable data={occupations} columns={[
   {dataField: 'roomType', title: 'Option'},
   {dataField: 'participants', title: 'Teilnehmer'},
@@ -15,7 +15,7 @@ export default ({occupations, durations}) => {
   {dataField: 'waitinglistMembers', title: 'Wartende'}
       ]}/>
       <hr />
-      <h4>Aufenthaltsdauer</h4>
+      <h4>Duration of Stay</h4>
       <DataTable data={compact([durations['2'], durations['3'], durations['4'], durations['5']])}
                  columns={[
                  {dataField: 'duration', title: 'Option'},

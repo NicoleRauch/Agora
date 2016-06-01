@@ -1,7 +1,7 @@
 import React from 'react';
 import DataTable from './DataTable.js';
 
-export default (props) => {
+export default ({participants}) => {
   const participantColumns = [
     {dataField: 'registeredAt', title: 'Registriert'},
     {dataField: 'nickname', title: 'Nickname'},
@@ -16,11 +16,10 @@ export default (props) => {
 
   return (
     <div>
-      { Object.keys(props.participants).map(resourceName => {
-          const resource = props.participants[resourceName];
-          return ( <div key={'participants-' + resourceName}>
-            <h4>{resourceName} ({resource.participants.length} von {resource.limit || 'unbegrenzt'})</h4>
-            <DataTable data={resource.participants} columns={participantColumns}/>
+      { participants.map(participantsPerRoom => {
+          return ( <div key={'participants-' + participantsPerRoom.roomType}>
+            <h4>{participantsPerRoom.roomType} ({participantsPerRoom.participants.length} von {participantsPerRoom.limit !== '0' ? participantsPerRoom.limit : 'unlimited'})</h4>
+            <DataTable data={participantsPerRoom.participants} columns={participantColumns}/>
           </div> );
         })}
     </div>

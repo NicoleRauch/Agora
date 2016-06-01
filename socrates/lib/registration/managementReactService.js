@@ -52,7 +52,8 @@ module.exports = {
             const participantsByResources = R.map(roomType => {
                 return {
                   limit: socratesReadModel.quotaFor(roomType),
-                  participants: groupedLines[roomType]
+                  roomType: roomType,
+                  participants: groupedLines[roomType] || []
                 };
               },
               roomOptions.allIds());
