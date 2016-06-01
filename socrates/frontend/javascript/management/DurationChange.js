@@ -11,11 +11,8 @@ export default class extends Component {
     return (
       <div>
         <select className="form-control" style={{height: 'inherit'}} ref={c => { this.input.select = c; }}>
-          <option value="0">&nbsp;</option>
-          <option value="2">saturday evening</option>
-          <option value="3">sunday morning</option>
-          <option value="4">sunday evening</option>
-          <option value="5">monday morning</option>
+          { [{value: 0, text: ''}, {value: 2, text: 'saturday evening'}, {value: 3, text: 'sunday morning'}, {value: 4, text: 'sunday evening'}, {value: 5, text: 'monday morning'}]
+            .map(entry => <option key={'durationchange_' + entry.value} value={entry.value}>{entry.text}</option>) }
         </select>
         <button className="btn btn-default btn-xs" onClick={()=>{}}>Change</button>
       </div>
