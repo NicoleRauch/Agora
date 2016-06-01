@@ -73,11 +73,11 @@ module.exports = {
 
       function membersOnWaitinglist(roomType, globalCallback) {
         async.map(registrationReadModel.allWaitinglistParticipantsIn(roomType),
-          function (entry, callback) {
+          function (entry, localCB) {
             memberstore.getMemberForId(entry.memberId, function (err2, member) {
-              if (err2 || !member) { return callback(err2); }
+              if (err2 || !member) { return localCB(err2); }
               member.addedToWaitinglistAt = entry.joinedWaitinglist;
-              callback(null, member);
+              localCB(null, member);
             });
           },
           function (err2, results) {
