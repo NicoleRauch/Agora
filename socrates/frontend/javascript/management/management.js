@@ -7,14 +7,14 @@ import Payments from './payments';
 import Participants from './participants';
 import BedOccupation from './BedOccupation';
 import Waiting from './Waiting';
-import * as actions from './Actions';
+import * as Actions from './Actions';
 
 export class ManagementComponent extends Component {
 
   componentDidMount() {
-    this.props.dispatch(actions.loadParticipants());
-    this.props.dispatch(actions.loadWaiting());
-    this.props.dispatch(actions.loadDurations());
+    this.props.dispatch(Actions.loadParticipants());
+    this.props.dispatch(Actions.loadWaiting());
+    this.props.dispatch(Actions.loadDurations());
   }
 
   render() {
