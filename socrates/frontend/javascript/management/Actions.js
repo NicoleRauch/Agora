@@ -13,15 +13,10 @@ export function receiveParticipants(participants) {
 }
 
 function fetchParticipants() {
-  const request = {
-    url: '/registration/participants'
-  };
-
-  return Rx.Observable.ajax(request);
+  return Rx.Observable.ajax({ url: '/registration/participants'});
 }
 
 export function loadParticipants() {
-
   return (dispatch) => fetchParticipants().map(({response: participants}) => receiveParticipants(participants));
 }
 
@@ -32,22 +27,12 @@ export function receiveWaiting(waiting) {
   };
 }
 
-function fetchWaiting(callback) {
-  ajax.ajax({url: '/registration/waiting'},
-    (code, responseText) => {
-      callback(JSON.parse(responseText));
-    }
-  );
+function fetchWaiting() {
+  return Rx.Observable.ajax({url: '/registration/waiting'});
 }
 
 export function loadWaiting() {
-  /*
-   return (dispatch) => {
-   fetchWaiting(participants => {
-   dispatch(receiveWaiting(participants));
-   });
-   };
-   */
+  return (dispatch) => fetchWaiting().map(({response: waiting}) => receiveWaiting(waiting));
 }
 
 export function receiveDurations(durations) {
@@ -57,20 +42,10 @@ export function receiveDurations(durations) {
   };
 }
 
-function fetchDurations(callback) {
-  ajax.ajax({url: '/registration/durations'},
-    (code, responseText) => {
-      callback(JSON.parse(responseText));
-    }
-  );
+function fetchDurations() {
+  return Rx.Observable.ajax({url: '/registration/durations'});
 }
 
 export function loadDurations() {
-  /*
-   return (dispatch) => {
-   fetchDurations(durations => {
-   dispatch(receiveDurations(durations));
-   });
-   };
-   */
+  return (dispatch) => fetchDurations().map(({response: durations}) => receiveDurations(durations));
 }
