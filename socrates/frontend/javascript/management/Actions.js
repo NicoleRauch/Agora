@@ -1,4 +1,5 @@
 import ajax from 'nanoajax';
+import Rx from 'rxjs/Rx.DOM';
 
 export const RECEIVED_PARTICIPANTS = 'RECEIVED_PARTICIPANTS';
 export const RECEIVED_WAITING = 'RECEIVED_WAITING';
@@ -11,20 +12,17 @@ export function receiveParticipants(participants) {
   };
 }
 
-function fetchParticipants(callback) {
-  ajax.ajax({url: '/registration/participants' },
-    (code, responseText) => {
-      callback(JSON.parse(responseText));
-    }
-  );
+function fetchParticipants() {
+  const request = {
+    url: '/registration/participants'
+  };
+
+  return Rx.Observable.ajax(request);
 }
 
 export function loadParticipants() {
-  return (dispatch) => {
-    fetchParticipants(participants => {
-      dispatch(receiveParticipants(participants));
-    });
-  };
+
+  return (dispatch) => fetchParticipants().map(({response: participants}) => receiveParticipants(participants));
 }
 
 export function receiveWaiting(waiting) {
@@ -35,7 +33,7 @@ export function receiveWaiting(waiting) {
 }
 
 function fetchWaiting(callback) {
-  ajax.ajax({url: '/registration/waiting' },
+  ajax.ajax({url: '/registration/waiting'},
     (code, responseText) => {
       callback(JSON.parse(responseText));
     }
@@ -43,11 +41,13 @@ function fetchWaiting(callback) {
 }
 
 export function loadWaiting() {
-  return (dispatch) => {
-    fetchWaiting(participants => {
-      dispatch(receiveWaiting(participants));
-    });
-  };
+  /*
+   return (dispatch) => {
+   fetchWaiting(participants => {
+   dispatch(receiveWaiting(participants));
+   });
+   };
+   */
 }
 
 export function receiveDurations(durations) {
@@ -58,7 +58,7 @@ export function receiveDurations(durations) {
 }
 
 function fetchDurations(callback) {
-  ajax.ajax({url: '/registration/durations' },
+  ajax.ajax({url: '/registration/durations'},
     (code, responseText) => {
       callback(JSON.parse(responseText));
     }
@@ -66,9 +66,11 @@ function fetchDurations(callback) {
 }
 
 export function loadDurations() {
-  return (dispatch) => {
-    fetchDurations(durations => {
-      dispatch(receiveDurations(durations));
-    });
-  };
+  /*
+   return (dispatch) => {
+   fetchDurations(durations => {
+   dispatch(receiveDurations(durations));
+   });
+   };
+   */
 }

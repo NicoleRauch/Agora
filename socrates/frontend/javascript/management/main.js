@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createStore, applyMiddleware } from 'redux';
-import thunkMiddleware from 'redux-thunk';
+import { reduxObservable } from 'redux-observable';
 import createLogger from 'redux-logger';
 import { Provider } from 'react-redux';
 
@@ -11,7 +11,7 @@ import reducers from './reducers.js';
 const logger = createLogger();
 
 const createStoreWithMiddleware = applyMiddleware(
-  thunkMiddleware,
+  reduxObservable(),
   logger
 )(createStore);
 
