@@ -33,7 +33,7 @@ export class ManagementComponent extends Component {
               <a href='/registration' className='btn pull-right btn-default'>Zurück</a>
             </h2>
           </div>
-          <Tabs selectedIndex={0}>
+          <Tabs>
             <TabList>
               <Tab>Übersicht</Tab>
               <Tab>Participants</Tab>
