@@ -63,55 +63,43 @@ module.exports = {
         });
       });
     });
-
   },
 
   waiting: function (callback) {
     eventstoreService.getRegistrationReadModel(currentUrl, function (err00, registrationReadModel) {
       if (err00 || !registrationReadModel) { return callback(err00); }
 
-      var waitinglistMembers = [];
+      activityParticipantService.getWaitinglistParticipantsFor(currentYear, function (err17, waitinglistParticipants) {
+        if (err17) { return callback(err17); }
+        managementService.addonLinesOf(waitinglistParticipants, function (err18, waitinglistAddonLines) {
+          if (err18) { return callback(err18); }
 
-      function membersOnWaitinglist(roomType, globalCallback) {
-        async.map(registrationReadModel.allWaitinglistParticipantsIn(roomType),
-          function (entry, localCB) {
-            memberstore.getMemberForId(entry.memberId, function (err2, member) {
-              if (err2 || !member) { return localCB(err2); }
-              member.addedToWaitinglistAt = entry.joinedWaitinglist;
-              localCB(null, member);
-            });
-          },
-          function (err2, results) {
-            if (err2) { return callback(err2); }
-            waitinglistMembers.push(_.compact(results));
-            globalCallback();
+          var waitinglistLinesOf = {};
+          roomOptions.allIds().forEach(roomType => { waitinglistLinesOf[roomType] = []; });
+          waitinglistAddonLines.forEach(line => {
+            registrationReadModel.roomTypesOf(line.member.id()).forEach(roomType => { waitinglistLinesOf[roomType].push(line); });
           });
-      }
 
-      async.each(roomOptions.allIds(),
-        membersOnWaitinglist,
-        function (err2) {
-          if (err2) { return callback(err2); }
-
-          managementService.addonLinesOf(_.flatten(waitinglistMembers), function (err1, waitinglistLines) {
-            if (err1) { return callback(err1); }
-
-            var result = _(waitinglistLines).map(function (line) {
-              return {
-                firstname: line.member.firstname(),
-                lastname: line.member.lastname(),
-                email: line.member.email(),
-                tShirtSize: line.addon.tShirtSize(),
-                desiredRoommate: line.participation.roommate(),
-                homeAddress: line.addon.homeAddressLines(),
-                billingAddress: line.addon.billingAddressLines(),
-                resourceNames: registrationReadModel.roomTypesOf(line.member.id())
-              };
-            });
-
-            callback(null, result);
+          const waitinglistInfo = waitinglistAddonLines.map(line => {
+            return {
+              joined: registrationReadModel.joinedWaitinglistAt(line.member.id()),
+              nickname: line.member.nickname(),
+              firstname: line.member.firstname(),
+              lastname: line.member.lastname(),
+              email: line.member.email(),
+              location: line.member.location(),
+              roommate: line.participation.roommate(),
+              roomTypes: registrationReadModel.roomTypesOf(line.member.id()),
+              tShirtSize: line.addon.tShirtSize(),
+              desiredRoommate: line.participation.roommate(),
+              homeAddress: line.addon.homeAddressLines(),
+              billingAddress: line.addon.billingAddressLines()
+            };
           });
+
+          callback(null, waitinglistInfo);
         });
+      });
     });
   },
 

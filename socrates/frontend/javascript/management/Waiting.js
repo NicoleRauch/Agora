@@ -5,7 +5,7 @@ export default ({waiting}) => {
 
   var columns = [
     {dataField: 'joinedWaitinglist', title: 'Joined'},
-    {dataField: 'resourceNames', title: 'Desired Room Types'},
+    {dataField: 'roomTypes', title: 'Desired Room Types'},
     {dataField: 'nickname', title: 'Nickname'},
     {dataField: 'firstname', title: 'First name'},
     {dataField: 'lastname', title: 'Last name'}

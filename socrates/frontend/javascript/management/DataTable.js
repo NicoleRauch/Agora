@@ -1,5 +1,12 @@
 import React from 'react';
 
+function format(data) {
+  if (data instanceof Array) {
+    return data.join(', ');
+  }
+  return data;
+}
+
 export default (props) => (
   <table className="table table-condensed table-hover table-striped">
     <thead>
@@ -10,10 +17,10 @@ export default (props) => (
 
     <tbody>
     { props.data.map((data, rindex) =>
-        <tr key={'trow-' + rindex}>
-          { props.columns.map((column, cindex) =>
-            <td key={'tdata-' + cindex + '-' + rindex}> { data[column.dataField] } </td> )}
-        </tr>
+      <tr key={'trow-' + rindex}>
+        { props.columns.map((column, cindex) =>
+          <td key={'tdata-' + cindex + '-' + rindex}> { format(data[column.dataField]) } </td>)}
+      </tr>
     )}
     </tbody>
   </table>
