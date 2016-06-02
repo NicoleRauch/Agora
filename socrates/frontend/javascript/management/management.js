@@ -35,7 +35,7 @@ export class ManagementComponent extends Component {
           </div>
           <Tabs>
             <TabList>
-              <Tab>Übersicht</Tab>
+              <Tab>Overview</Tab>
               <Tab>Participants</Tab>
               <Tab>Waiting Lists</Tab>
               <Tab>Zahlungen</Tab>
