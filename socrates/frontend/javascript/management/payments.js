@@ -12,10 +12,7 @@ export default (props) => {
     {dataField: 'email', title: 'E-Mail'},
     {dataField: 'location', title: 'Ort/Region'},
     {dataField: 'tShirtSize', title: 'T-Shirt'},
-    {dataField: 'desiredRoommate', title: 'Zimmer mit'},
-    {dataField: 'bankTransferDate', title: 'Überwiesen'},
-    {dataField: 'creditCardDate', title: 'Kreditkarte'},
-    {dataField: 'paymentReceived', title: 'Zahlungseingang'}
+    {dataField: 'desiredRoommate', title: 'Zimmer mit'}
   ];
 
   const resourceNames = Object.keys(props.participants);

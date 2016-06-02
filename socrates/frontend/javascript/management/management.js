@@ -37,16 +37,18 @@ export class ManagementComponent extends Component {
             <TabList>
               <Tab>Overview</Tab>
               <Tab>Participants</Tab>
+              <Tab>Participants by Rooms</Tab>
               <Tab>Waiting Lists</Tab>
-              <Tab>Zahlungen</Tab>
               <Tab>Zimmerzuordnungen</Tab>
               <Tab>T-Shirt-Bestellungen</Tab>
               <Tab>Zusatzinformationen</Tab>
-              <Tab>Abgemeldete</Tab>
               <Tab>Adressen</Tab>
             </TabList>
             <TabPanel>
               <BedOccupation occupations={[]} durations={this.props.durations}/>
+            </TabPanel>
+            <TabPanel>
+              <Payments participants={this.props.participants}/>
             </TabPanel>
             <TabPanel>
               <Participants participants={this.props.participants} handleDurationChange={this._handleDurationChange}/>
@@ -54,13 +56,9 @@ export class ManagementComponent extends Component {
             <TabPanel>
               <Waiting waiting={this.props.waiting}/>
             </TabPanel>
-            <TabPanel>
-              <Payments participants={this.props.participants}/>
-            </TabPanel>
             <TabPanel>E</TabPanel>
             <TabPanel>F</TabPanel>
             <TabPanel>G</TabPanel>
-            <TabPanel>H</TabPanel>
             <TabPanel>
               <Addresses participants={this.props.participants} waiting={this.props.waiting}/>
             </TabPanel>
