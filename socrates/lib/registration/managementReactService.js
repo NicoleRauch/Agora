@@ -1,12 +1,9 @@
 'use strict';
 
-var _ = require('lodash');
 var R = require('ramda');
-var async = require('async');
 
 var conf = require('simple-configure');
 var beans = conf.get('beans');
-var memberstore = beans.get('memberstore');
 var activityParticipantService = beans.get('activityParticipantService');
 var roomOptions = beans.get('roomOptions');
 var managementService = beans.get('managementService');
