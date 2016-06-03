@@ -14,9 +14,12 @@ export default class extends Component {
                 ref={c => { this.input.select = c; }}>
           { [{value: '0', text: ''}, {value: '2', text: 'saturday evening'}, {value: '3', text: 'sunday morning'}, {value: '4', text: 'sunday evening'}, {value: '5', text: 'monday morning'}]
             .filter(entry => entry.value !== this.props.currentDuration)
-            .map(entry => <option key={'durationchange_' + entry.value} value={entry.value}>{entry.text}</option>) }
+            .map(entry =>
+              <option key={'durationchange_' + entry.value} value={entry.value}>{entry.text}</option>
+            ) }
         </select>
-        <button className="btn btn-default btn-xs" onClick={()=>{ this.props.handleClick(this.input.select.value); }}>
+        <button className="btn btn-default btn-xs"
+                onClick={() => this.input.select.value === '0' || this.props.handleClick(this.input.select.value)}>
           Change
         </button>
       </div>
