@@ -1,6 +1,8 @@
 import React from 'react';
 import DurationChange from './DurationChange';
 
+import { endOfStayFor } from '../../../lib/activities/roomOptions';
+
 export default ({participants, handleDurationChange}) => {
 
   return (
@@ -33,8 +35,8 @@ export default ({participants, handleDurationChange}) => {
                 <td>{participant.firstname}</td>
                 <td>{participant.lastname}</td>
                 <td>{participant.location}</td>
-                <td>{participant.duration}</td>
                 <td><DurationChange handleClick={newDuration => handleDurationChange(participant.roomType, participant.nickname, newDuration)}/></td>
+                <td>{endOfStayFor(participant.duration)}</td>
                 <td>blank</td>
                 <td>blank</td>
               </tr>

@@ -40,7 +40,7 @@ module.exports = {
                 desiredRoommate: line.participation.roommate(),
 
                 registered: registrationReadModel.joinedSoCraTesAt(line.member.id()),
-                duration: registrationReadModel.durationFor(line.member.id()),
+                duration: registrationReadModel.participantEventFor(line.member.id()).duration,
                 roomType: registrationReadModel.registeredInRoomType(line.member.id())
               };
             }, addonLines);

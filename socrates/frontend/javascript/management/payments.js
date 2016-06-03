@@ -1,11 +1,13 @@
 import React from 'react';
 import DataTable from './DataTable.js';
-import { reduce } from 'lodash';
+import {reduce} from 'lodash';
+
+import {endOfStayFor} from '../../../lib/activities/roomOptions';
 
 export default (props) => {
   var columns = [
     {dataField: 'registered', title: 'Registriert'},
-    {dataField: 'resourceName', title: 'Ressource'},
+    {dataField: 'roomType', title: 'Room Type'},
     {dataField: 'nickname', title: 'Nickname'},
     {dataField: 'firstname', title: 'Vorname'},
     {dataField: 'lastname', title: 'Nachname'},
@@ -15,11 +17,9 @@ export default (props) => {
     {dataField: 'desiredRoommate', title: 'Zimmer mit'}
   ];
 
-  const resourceNames = Object.keys(props.participants);
-  const participants = reduce(resourceNames,
-    (acc, resourceName) =>
-      acc.concat(props.participants[resourceName].participants
-        .map(participant => Object.assign({ resourceName: resourceName }, participant))),
+  const participants = reduce(props.participants,
+    (acc, participantsForRoom) =>
+      acc.concat(participantsForRoom.participants.map(participant => Object.assign({roomType: participantsForRoom.roomType}, participant))),
     []
   );
 
