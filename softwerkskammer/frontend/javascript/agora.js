@@ -237,8 +237,8 @@ var initParameterisedCalendar, interestify, surroundInterestsWithLinks, surround
     });
     $('.multiselect').select2();
     $('.multiselectEditable').select2({tags: true});
-    $(document).ready(function () {
-      $('.currency').autoNumeric('init');
+    $(document).ready(function (f) {
+      f('.currency').autoNumeric('init');
     });
     $('.c-picker').colorpicker();
     $('.tooltiplabel').each(function () { $(this).tooltip(); });
